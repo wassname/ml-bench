@@ -1,5 +1,0 @@
-/* Header cells are short and dense (pts/Mtok, $/run). Wrapping them costs more width than it
-   saves, because the wrapped word sets the column anyway. */
-table th {
-  white-space: nowrap;
-}
