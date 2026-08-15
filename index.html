@@ -23,16 +23,28 @@
   #tip { position: fixed; pointer-events: none; background: #fff; border: 1px solid var(--rule);
          border-radius: 4px; padding: .4rem .6rem; font-size: .85rem; box-shadow: 0 2px 8px #0002;
          opacity: 0; transition: opacity .1s; }
-  #table { overflow-x: auto; margin-top: 2rem; }
+  /* results.md, rendered. The table is the reason this page exists, so it gets the typography:
+     numbers align on the decimal, the model name stays put while the 12 item columns scroll. */
+  #table { margin-top: 2.5rem; }
+  #table h2 { font-size: 1.15rem; margin: 2rem 0 .4rem; }
+  #table h3 { font-size: 1rem; margin: 1.6rem 0 .4rem; }
+  #table p { max-width: 68ch; }
+  #table sub { color: #6b7280; display: block; max-width: 68ch; line-height: 1.5; }
+  #table table { border-collapse: collapse; width: 100%; font-size: .85rem;
+                 font-variant-numeric: tabular-nums; display: block; overflow-x: auto; }
+  #table th, #table td { padding: .35rem .5rem; text-align: right; white-space: nowrap;
+                         border-bottom: 1px solid var(--rule); }
+  #table th { font-weight: 600; border-bottom: 2px solid var(--ink); }
+  #table th:first-child, #table td:first-child { text-align: left; position: sticky; left: 0;
+                                                 background: #fff; }
+  #table tbody tr:hover td { background: #f9fafb; }
+  #table td:nth-child(2) { font-weight: 600; }
   footer { margin-top: 2rem; color: #6b7280; font-size: .85rem; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
 
-<h1>wassname-ml-bench</h1>
-<p class="lede">Twelve hard machine learning research problems from
-<a href="https://wassname.org">wassname</a>'s own work, none of them in any training set, each
-scored against his own answer. A score of 1.00 means the model matched his answer. The questions
-stay private, so this page shows the scores and the domains, and nothing that would let a model be
-trained on them.</p>
+<!-- The prose lives in page.md and is wassname's to edit. Nothing here is hand-written text. -->
+<div id="intro"></div>
 
 <div class="controls">
   <label>cost as <select id="axis">
@@ -144,7 +156,31 @@ fetch("results.json").then(r => r.json()).then(data => {
   document.getElementById("version").textContent = data.version;
   redraw();
 });
-fetch("_table.html").then(r => r.text()).then(h => {
-  document.getElementById("table").innerHTML = h;
+// Two markdown files: page.md is hand-written, results.md is what bench.py wrote for git, and the
+// page renders the same table a reader would see on GitHub.
+fetch("page.md").then(r => r.text()).then(md => {
+  document.getElementById("intro").innerHTML = marked.parse(md);
 });
+fetch("results.md").then(r => r.text()).then(md => {
+  document.getElementById("table").innerHTML = marked.parse(md);
+  shade(document.querySelector("#table table"));
+});
+
+// The 12 item columns are 12 numbers a reader has to compare by eye. Tint each cell by its value
+// and the column reads as a strip of small multiples: pale is where a model fell into the traps,
+// dark is where it matched wassname. Same numbers, no extra ink.
+function shade(table) {
+  if (!table) return;
+  const head = [...table.querySelectorAll("thead th")].map(th => th.textContent.trim());
+  const cols = head.map((h, i) => /#\d+/.test(h) ? i : -1).filter(i => i >= 0);
+  const rows = [...table.querySelectorAll("tbody tr")];
+  const vals = rows.flatMap(tr => cols.map(i => parseFloat(tr.cells[i]?.textContent)))
+                   .filter(v => !isNaN(v));
+  const lo = Math.min(...vals), hi = Math.max(...vals);
+  for (const tr of rows) for (const i of cols) {
+    const v = parseFloat(tr.cells[i]?.textContent);
+    if (isNaN(v)) continue;
+    tr.cells[i].style.background = `rgba(31,41,55,${(0.06 + 0.34 * (v - lo) / (hi - lo)).toFixed(3)})`;
+  }
+}
 </script>
