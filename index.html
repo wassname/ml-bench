@@ -198,12 +198,18 @@ function draw(data, x, labs) {
   // row carries the same bar, so drawing 21 of them would only add ink.
   const se = data.judge && data.judge.disagreement && data.judge.disagreement.se;
   if (se) {
-    const ex = W - PAD.r - 260, ey = H - PAD.b - 40, h = (py(0) - py(se)) / 2;
+    // Top right, inside the headroom kept above the 1.00 line, which no point can occupy.
+    const ex = W - PAD.r - 10, ey = PAD.t + 22, h = Math.max(4, (py(0) - py(se)) / 2);
     el("path", { class: "err", d: `M${ex - 4},${ey - h} h8 M${ex},${ey - h} V${ey + h} ` +
                                   `M${ex - 4},${ey + h} h8` }, svg);
-    Object.assign(el("text", { class: "err-text", x: ex + 10, y: ey + 4 }, svg),
+    Object.assign(el("text", { class: "err-text", x: ex - 10, y: ey + 4,
+                               "text-anchor": "end" }, svg),
                   { textContent: `±${se.toFixed(3)} judge uncertainty, same on every row` });
   }
+
+  // Where the chart came from, so a screenshot can still be traced back.
+  Object.assign(el("text", { class: "err-text", x: PAD.l, y: H - 6 }, svg),
+                { textContent: "wassname.github.io/ml-bench" });
 
   const front = frontier(shown, x);
   el("polyline", { class: "frontier",
