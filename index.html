@@ -10,8 +10,16 @@
          font: 16px/1.55 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
   h1 { font-size: 1.6rem; margin: 0 0 .3rem; }
   p.lede { color: #4b5563; margin: 0 0 1.5rem; max-width: 62ch; }
-  .controls { display: flex; gap: 1rem; align-items: baseline; margin: 0 0 .5rem; font-size: .9rem; }
-  select { font: inherit; font-size: .9rem; padding: .15rem .3rem; }
+  .controls { display: flex; gap: 1.5rem; align-items: center; margin: 1.5rem 0 .5rem;
+              font-size: .85rem; color: #6b7280; }
+  .controls label { display: flex; gap: .45rem; align-items: center; }
+  select { font: inherit; font-size: .9rem; color: var(--ink); padding: .35rem 2rem .35rem .6rem;
+           border: 1px solid var(--rule); border-radius: 6px; background: #fff no-repeat right .6rem
+           center/9px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' \
+           height='6'%3E%3Cpath d='M0 0h9L4.5 6z' fill='%236b7280'/%3E%3C/svg%3E");
+           appearance: none; cursor: pointer; }
+  select:hover { border-color: var(--grey); }
+  select:focus-visible { outline: 2px solid #2563eb; outline-offset: 1px; }
   svg { display: block; width: 100%; height: auto; }
   .axis line, .axis path { stroke: var(--ink); }
   .axis text { font-size: 11px; fill: #4b5563; }
@@ -28,8 +36,10 @@
   #table { margin-top: 2.5rem; }
   #table h2 { font-size: 1.15rem; margin: 2rem 0 .4rem; }
   #table h3 { font-size: 1rem; margin: 1.6rem 0 .4rem; }
-  #table p { max-width: 68ch; }
-  #table sub { color: #6b7280; display: block; max-width: 68ch; line-height: 1.5; }
+  #table p, #table sub { color: #4b5563; font-size: .9rem; }
+  #table sub { display: block; margin: .8rem 0; font-size: .8rem; line-height: 1.6;
+               vertical-align: baseline; }
+  #table th[title], #table td[title] { cursor: help; text-decoration: underline dotted #d1d5db; }
   #table table { border-collapse: collapse; width: 100%; font-size: .85rem;
                  font-variant-numeric: tabular-nums; display: block; overflow-x: auto; }
   #table th, #table td { padding: .35rem .5rem; text-align: right; white-space: nowrap;
@@ -43,7 +53,7 @@
 </style>
 <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
 
-<!-- The prose lives in page.md and is wassname's to edit. Nothing here is hand-written text. -->
+<!-- The prose lives in page.md, so editing it means editing markdown, never this file. -->
 <div id="intro"></div>
 
 <div class="controls">
@@ -161,14 +171,38 @@ fetch("results.json").then(r => r.json()).then(data => {
 fetch("page.md").then(r => r.text()).then(md => {
   document.getElementById("intro").innerHTML = marked.parse(md);
 });
-fetch("results.md").then(r => r.text()).then(md => {
+Promise.all([
+  fetch("results.md").then(r => r.text()),
+  fetch("results.json").then(r => r.json()),
+]).then(([md, data]) => {
   document.getElementById("table").innerHTML = marked.parse(md);
-  shade(document.querySelector("#table table"));
+  const table = document.querySelector("#table table");
+  shade(table);
+  explain(table, data);
 });
 
-// The 12 item columns are 12 numbers a reader has to compare by eye. Tint each cell by its value
-// and the column reads as a strip of small multiples: pale is where a model fell into the traps,
-// dark is where it matched wassname. Same numbers, no extra ink.
+// The markdown table carries short labels, because the full model id and a sentence per column
+// would make it four times as wide. Both live in results.json, so the page hands them back on
+// hover instead.
+function explain(table, data) {
+  if (!table) return;
+  const byLabel = Object.fromEntries(
+    Object.values(data.items).map(i => [i.label, `Score for the ${i.domain} question.`]));
+  for (const th of table.querySelectorAll("thead th")) {
+    const key = th.textContent.trim().replace(/[↑↓]$/, "");
+    const help = data.columns[key] || byLabel[key];
+    if (help) th.title = help;
+  }
+  const full = Object.fromEntries(data.rows.map(r => [r.model, r.full]));
+  for (const tr of table.querySelectorAll("tbody tr")) {
+    const cell = tr.cells[0], name = cell.textContent.trim();
+    if (full[name] && full[name] !== name) cell.title = full[name];
+  }
+}
+
+// Twelve numeric columns are hard to compare by eye. Tinting each cell by its value turns them
+// into a strip of small multiples: dark where a model matched wassname, pale where it fell into
+// the traps, with the numbers still there to read.
 function shade(table) {
   if (!table) return;
   const head = [...table.querySelectorAll("thead th")].map(th => th.textContent.trim());

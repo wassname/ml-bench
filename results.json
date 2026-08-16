@@ -20,7 +20,8 @@
    "trm_adapter": 0.6,
    "ts_leakage_review": 0.7352941176470589,
    "vgrout_signed_corda": 0.9047619047619048,
-   "vjp_delta": 0.8125
+   "vjp_delta": 0.8125,
+   "full": "z-ai/glm-5.2"
   },
   {
    "model": "muse-spark-1.2",
@@ -41,7 +42,8 @@
    "trm_adapter": 0.4,
    "ts_leakage_review": 0.8235294117647058,
    "vgrout_signed_corda": 0.35714285714285715,
-   "vjp_delta": 0.75
+   "vjp_delta": 0.75,
+   "full": "meta/muse-spark-1.2"
   },
   {
    "model": "deepseek-v4-pro-0813",
@@ -62,7 +64,8 @@
    "trm_adapter": 0.5,
    "ts_leakage_review": 0.7843137254901961,
    "vgrout_signed_corda": 0.4166666666666667,
-   "vjp_delta": 0.625
+   "vjp_delta": 0.625,
+   "full": "deepseek/deepseek-v4-pro-0813"
   },
   {
    "model": "deepseek-v4-flash-0731",
@@ -83,7 +86,8 @@
    "trm_adapter": 0.3333333333333333,
    "ts_leakage_review": 0.7941176470588235,
    "vgrout_signed_corda": 0.5357142857142857,
-   "vjp_delta": 0.875
+   "vjp_delta": 0.875,
+   "full": "deepseek/deepseek-v4-flash-0731"
   },
   {
    "model": "gemini-3.7-flash",
@@ -104,7 +108,8 @@
    "trm_adapter": 0.5,
    "ts_leakage_review": 0.7450980392156863,
    "vgrout_signed_corda": 0.16666666666666669,
-   "vjp_delta": 0.9583333333333334
+   "vjp_delta": 0.9583333333333334,
+   "full": "google/gemini-3.7-flash"
   },
   {
    "model": "mimo-v2.5-pro",
@@ -125,7 +130,8 @@
    "trm_adapter": 0.7500000000000001,
    "ts_leakage_review": 0.6568627450980393,
    "vgrout_signed_corda": 0.40476190476190477,
-   "vjp_delta": 1.0
+   "vjp_delta": 1.0,
+   "full": "xiaomi/mimo-v2.5-pro"
   },
   {
    "model": "gemini-3.6-flash",
@@ -146,7 +152,8 @@
    "trm_adapter": 0.4333333333333333,
    "ts_leakage_review": 0.6372549019607844,
    "vgrout_signed_corda": 0.4523809523809524,
-   "vjp_delta": 0.7083333333333334
+   "vjp_delta": 0.7083333333333334,
+   "full": "google/gemini-3.6-flash"
   },
   {
    "model": "minimax-m3",
@@ -167,7 +174,8 @@
    "trm_adapter": 0.4333333333333334,
    "ts_leakage_review": 0.7941176470588236,
    "vgrout_signed_corda": 0.4047619047619047,
-   "vjp_delta": 0.7708333333333334
+   "vjp_delta": 0.7708333333333334,
+   "full": "minimax/minimax-m3"
   },
   {
    "model": "qwen3.5-35b-a3b",
@@ -188,7 +196,8 @@
    "trm_adapter": 0.5333333333333334,
    "ts_leakage_review": 0.5294117647058824,
    "vgrout_signed_corda": 0.17857142857142858,
-   "vjp_delta": 0.6458333333333333
+   "vjp_delta": 0.6458333333333333,
+   "full": "qwen/qwen3.5-35b-a3b"
   },
   {
    "model": "qwen3.5-27b",
@@ -209,7 +218,8 @@
    "trm_adapter": 0.5333333333333333,
    "ts_leakage_review": 0.5833333333333334,
    "vgrout_signed_corda": 0.25,
-   "vjp_delta": 1.0
+   "vjp_delta": 1.0,
+   "full": "qwen/qwen3.5-27b"
   },
   {
    "model": "qwen3.5-397b-a17b",
@@ -230,7 +240,8 @@
    "trm_adapter": 0.5833333333333334,
    "ts_leakage_review": 0.45588235294117646,
    "vgrout_signed_corda": 0.39285714285714285,
-   "vjp_delta": 0.3958333333333333
+   "vjp_delta": 0.3958333333333333,
+   "full": "qwen/qwen3.5-397b-a17b"
   },
   {
    "model": "gpt-oss-120b",
@@ -251,7 +262,8 @@
    "trm_adapter": 0.33333333333333337,
    "ts_leakage_review": 0.2647058823529412,
    "vgrout_signed_corda": 0.17857142857142858,
-   "vjp_delta": 0.08333333333333334
+   "vjp_delta": 0.08333333333333334,
+   "full": "openai/gpt-oss-120b"
   },
   {
    "model": "qwen3.5-122b-a10b",
@@ -272,7 +284,8 @@
    "trm_adapter": 0.4333333333333334,
    "ts_leakage_review": 0.607843137254902,
    "vgrout_signed_corda": 0.21428571428571427,
-   "vjp_delta": 0.375
+   "vjp_delta": 0.375,
+   "full": "qwen/qwen3.5-122b-a10b"
   },
   {
    "model": "qwen3.5-9b",
@@ -293,7 +306,8 @@
    "trm_adapter": 0.1,
    "ts_leakage_review": 0.22549019607843135,
    "vgrout_signed_corda": 0.011904761904761927,
-   "vjp_delta": 0.375
+   "vjp_delta": 0.375,
+   "full": "qwen/qwen3.5-9b"
   }
  ],
  "items": {
@@ -359,5 +373,13 @@
   "MiniMax": "logos/minimax.svg",
   "Xiaomi": "logos/xiaomi.svg",
   "Thinking Machines": "logos/thinkingmachines.png"
+ },
+ "columns": {
+  "model": "The model that answered the questions.",
+  "score": "The mean score of all 12 answers. 1.00 is wassname's own answer to the question.",
+  "answered": "How many of the 12 questions the model answered. Below 12 the score is blank, because a mean of fewer questions does not compare.",
+  "$/run": "What one run of all 12 questions costs. This is the model's own tokens. The judge is not included.",
+  "ktok": "Thousands of tokens the model wrote, reasoning included.",
+  "pts/Mtok": "Score for each million tokens. A model that writes more for the same score gets a lower number."
  }
 }
