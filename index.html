@@ -42,6 +42,8 @@
   .ref-text { font-size: 11px; fill: #6b7280; }
   .corner { font-size: 12px; fill: #15803d; }
   .corner-box { fill: #15803d14; stroke: #15803d40; }
+  .err { stroke: #6b7280; stroke-width: 1.2; fill: none; }
+  .err-text { font-size: 11px; fill: #6b7280; }
   #tip { position: fixed; pointer-events: none; background: #fff; border: 1px solid var(--rule);
          border-radius: 4px; padding: .4rem .6rem; font-size: .85rem; box-shadow: 0 2px 8px #0002;
          opacity: 0; transition: opacity .1s; }
@@ -189,6 +191,17 @@ function draw(data, x, labs) {
      svg);
   Object.assign(el("text", { class: "corner", x: PAD.l + 10, y: PAD.t + 16 }, svg),
                 { textContent: AXES[x].corner });
+
+  // One representative error bar, bottom right, where no model plots: expensive and weak. Every
+  // row carries the same bar, so drawing 21 of them would only add ink.
+  const se = data.judge && data.judge.disagreement && data.judge.disagreement.se;
+  if (se) {
+    const ex = W - PAD.r - 120, ey = H - PAD.b - 46, h = (py(0) - py(se)) / 2;
+    el("path", { class: "err", d: `M${ex - 4},${ey - h} h8 M${ex},${ey - h} V${ey + h} ` +
+                                  `M${ex - 4},${ey + h} h8` }, svg);
+    Object.assign(el("text", { class: "err-text", x: ex + 10, y: ey + 4 }, svg),
+                  { textContent: `±${se.toFixed(3)} judge` });
+  }
 
   const front = frontier(shown, x);
   el("polyline", { class: "frontier",
