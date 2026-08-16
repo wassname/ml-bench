@@ -143,7 +143,9 @@ function draw(data, x, labs) {
   // Bounds come from every point, so filtering a lab moves nothing under it.
   const xs = rows.map(r => Math.log10(r[x]));
   const x0 = Math.min(...xs) - 0.25, x1 = Math.max(...xs) + 0.25;
-  const y0 = Math.min(0, Math.min(...rows.map(r => r.score))) - 0.05;
+  // The floor follows the data. Pinned at 0 it spent half the chart on empty space when the
+  // weakest model scored 0.38, and 0 keeps its meaning in the caption rather than on the axis.
+  const y0 = Math.min(...rows.map(r => r.score)) - 0.05;
   // Room above the 1.00 line for its own label and the corner text, asked for in pixels and
   // solved back into score units, so the gap holds whatever the scores do. In score units alone a
   // model scoring 1.30 would squeeze the label out.
@@ -196,11 +198,11 @@ function draw(data, x, labs) {
   // row carries the same bar, so drawing 21 of them would only add ink.
   const se = data.judge && data.judge.disagreement && data.judge.disagreement.se;
   if (se) {
-    const ex = W - PAD.r - 120, ey = H - PAD.b - 46, h = (py(0) - py(se)) / 2;
+    const ex = W - PAD.r - 260, ey = H - PAD.b - 40, h = (py(0) - py(se)) / 2;
     el("path", { class: "err", d: `M${ex - 4},${ey - h} h8 M${ex},${ey - h} V${ey + h} ` +
                                   `M${ex - 4},${ey + h} h8` }, svg);
     Object.assign(el("text", { class: "err-text", x: ex + 10, y: ey + 4 }, svg),
-                  { textContent: `±${se.toFixed(3)} judge` });
+                  { textContent: `±${se.toFixed(3)} judge uncertainty, same on every row` });
   }
 
   const front = frontier(shown, x);
