@@ -202,14 +202,20 @@ function draw(data, x, labs) {
     // Directly under the reference line's own label and left-aligned with it, so the two notes
     // read as one stack. The marker follows the text rather than leading it, to keep that edge.
     const ty = py(1) + 18, h = Math.max(9, (py(0) - py(se)) / 2);
-    const label = `±${se.toFixed(3)} judge uncertainty`;
-    Object.assign(el("text", { class: "err-text", x: PAD.l + 4, y: ty + 4 }, svg),
-                  { textContent: label });
-    const ex = PAD.l + 14 + label.length * 6;
+    const note = Object.assign(el("text", { class: "err-text", x: PAD.l + 4, y: ty + 4 }, svg),
+                               { textContent: `±${se.toFixed(3)} judge uncertainty` });
+    // Measured, not guessed from the character count: an estimate left the marker floating far
+    // enough from its own label to read as an unrelated point.
+    const ex = PAD.l + 12 + note.getComputedTextLength();
     el("path", { class: "err", d: `M${ex - 4},${ty - h} h8 M${ex},${ty - h} V${ty + h} ` +
                                   `M${ex - 4},${ty + h} h8` }, svg);
     el("circle", { class: "err-dot", cx: ex, cy: ty, r: 3 }, svg);
   }
+
+  // What this is and where it came from, inside the axes so a cropped screenshot keeps it.
+  Object.assign(el("text", { class: "err-text", x: PAD.l + 4, y: H - PAD.b - 10 }, svg),
+                { textContent: "wassname's ML bench: 12 hard ML problems, " +
+                               "https://wassname.github.io/ml-bench/" });
 
   const front = frontier(shown, x);
   el("polyline", { class: "frontier",
