@@ -1,12 +1,17 @@
+<!-- Prose rewritten by Pi (annoy-less, rewrite mode); wassname, edit at will. -->
+
 # wassname-ml-bench
 
-Which model should you work with on hard machine learning problems? Public leaderboards answer that
-with questions someone else wrote. This one asks twelve questions taken from
-[wassname](https://wassname.org)'s own research, each with the answer he reached at the time.
+Which machine learning model should you work with? Public leaderboards test models on questions
+written by someone else. This bench tests them on twelve questions from
+[wassname](https://wassname.org)'s own research. Each question has the answer wassname reached at
+the time.
 
-The work is obscure, and some of it post-dates the models, so a model has to think its way there
-rather than recall it. A score of 1.00 means it reached his answer. Above 1.00 means the judge
-thought it beat him, and then he owes the question a better reference answer.
+His research is obscure, and some of it came after these models were trained. The answers are not
+in the training data, so a model must work them out. A score of 1.00 means the model reached
+wassname's answer. A higher score means the judge rated the model's answer above his. Wassname
+then writes a better reference answer for that question.
 
-The questions themselves stay behind the curtain, otherwise the next model trains on them. You get
-the scores, the domain of each question, and what the run cost.
+The questions stay private. A public question ends up in the next model's training data, and the
+bench would then test recall. The page shows each model's score, the domain of each question, and
+the cost of the run.
