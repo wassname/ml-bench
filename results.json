@@ -262,6 +262,32 @@
    "full": "google/gemini-3.7-flash"
   },
   {
+   "model": "deepseek-v4-flash-0731 (effort:high)",
+   "company": "DeepSeek",
+   "fallback": null,
+   "score": 0.6565020533546516,
+   "+-": 0.07,
+   "answered": "12/12",
+   "answers/q": 3,
+   "$/run": 0.08191960000000001,
+   "ktok": 291.355,
+   "pts/Mtok": 2.2532719649728055,
+   "reasoning share": 0.963851658629507,
+   "antipasto_sspace": 0.773419126728572,
+   "cwsteer_bidirectional": 0.3685416547949884,
+   "isokl_calibration": 0.8509566274698516,
+   "mche_pinn": 0.14416039673883138,
+   "nan_poison": 0.8973622347361027,
+   "one_loss_trick": 1.0049035274260159,
+   "pinn_clamp": 0.6155259750298673,
+   "seqvcr_loss": 0.7086373928935076,
+   "trm_adapter": 0.4788149182981341,
+   "ts_leakage_review": 0.7206403682304263,
+   "vgrout_signed_corda": 0.5469484847497813,
+   "vjp_delta": 0.7681139331597404,
+   "full": "deepseek/deepseek-v4-flash-0731"
+  },
+  {
    "model": "minimax-m3",
    "company": "MiniMax",
    "fallback": null,
@@ -312,32 +338,6 @@
    "vgrout_signed_corda": 0.47793588478426546,
    "vjp_delta": 0.7983299779581404,
    "full": "qwen/qwen3.8-max"
-  },
-  {
-   "model": "deepseek-v4-flash-0731 (effort:high)",
-   "company": "DeepSeek",
-   "fallback": null,
-   "score": 0.6473679029682374,
-   "+-": 0.076,
-   "answered": "12/12",
-   "answers/q": 1,
-   "$/run": 0.07374276,
-   "ktok": 259.208,
-   "pts/Mtok": 2.4974842711962495,
-   "reasoning share": 0.9571733897101942,
-   "antipasto_sspace": 0.7924428394945757,
-   "cwsteer_bidirectional": 0.21529507871722864,
-   "isokl_calibration": 0.8780106125700344,
-   "mche_pinn": 0.1233062960122366,
-   "nan_poison": 0.8835389966280355,
-   "one_loss_trick": 0.9855418670141369,
-   "pinn_clamp": 0.5889006449754878,
-   "seqvcr_loss": 0.7388125765332547,
-   "trm_adapter": 0.44540042296204974,
-   "ts_leakage_review": 0.7084814865879622,
-   "vgrout_signed_corda": 0.705441411896917,
-   "vjp_delta": 0.7032426022269296,
-   "full": "deepseek/deepseek-v4-flash-0731"
   },
   {
    "model": "deepseek-v4-flash-0731",
@@ -827,34 +827,34 @@
     "off_topic": 0.0103,
     "gold": 0.9901,
     "gap": 0.98,
-    "leniency": -0.006,
-    "judgments": 879
+    "leniency": -0.005,
+    "judgments": 893
    },
    "openai/gpt-oss-120b": {
     "off_topic": -0.0158,
     "gold": 0.9962,
     "gap": 1.012,
-    "leniency": 0.074,
-    "judgments": 843
+    "leniency": 0.073,
+    "judgments": 857
    },
    "qwen/qwen3.7-flash": {
     "off_topic": -0.0037,
     "gold": 0.9923,
     "gap": 0.996,
-    "leniency": -0.001,
-    "judgments": 843
+    "leniency": -0.002,
+    "judgments": 857
    },
    "thinkingmachines/inkling-small": {
     "off_topic": -0.02,
     "gold": 0.9877,
     "gap": 1.008,
-    "leniency": -0.012,
-    "judgments": 915
+    "leniency": -0.011,
+    "judgments": 929
    }
   },
   "disagreement": {
    "sd": 0.176,
-   "judgments_per_row": 154,
+   "judgments_per_row": 156,
    "se": 0.014
   },
   "dropout": {
@@ -897,12 +897,12 @@
   {
    "model": "claude-fable-5",
    "question": "SV#8",
-   "why": "refused 3/3 attempts. no refusal text, native_finish_reason=max_tokens"
+   "why": "refused 3/3 attempts. refusal: This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback."
   },
   {
    "model": "claude-fable-5",
    "question": "SV#8",
-   "why": "refused 3/3 attempts. refusal: This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback."
+   "why": "refused 3/3 attempts. no refusal text, native_finish_reason=max_tokens"
   },
   {
    "model": "claude-fable-5",
