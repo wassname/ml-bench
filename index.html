@@ -197,19 +197,49 @@ function draw(data, x, labs) {
 
   // One representative error bar, bottom right, where no model plots: expensive and weak. Every
   // row carries the same bar, so drawing 21 of them would only add ink.
-  const se = data.judge && data.judge.disagreement && data.judge.disagreement.se;
+  //
+  // The whole bar, not the judge term. Judge disagreement is the smallest of the three things
+  // that move a row, so the old `judge uncertainty` label read four times sharper than the bench
+  // is. `uncertainty.parts` splits it: between questions, between answers, between judges.
+  const un = data.uncertainty;
+  const se = un ? un.total : (data.judge && data.judge.disagreement && data.judge.disagreement.se);
   if (se) {
     // Directly under the reference line's own label and left-aligned with it, so the two notes
     // read as one stack. The marker follows the text rather than leading it, to keep that edge.
     const ty = py(1) + 18, h = Math.max(9, (py(0) - py(se)) / 2);
     const note = Object.assign(el("text", { class: "err-text", x: PAD.l + 4, y: ty + 4 }, svg),
-                               { textContent: `±${se.toFixed(3)} judge uncertainty` });
+                               { textContent: `±${se.toFixed(3)} uncertainty` });
     // Measured, not guessed from the character count: an estimate left the marker floating far
     // enough from its own label to read as an unrelated point.
     const ex = PAD.l + 12 + note.getComputedTextLength();
     el("path", { class: "err", d: `M${ex - 4},${ty - h} h8 M${ex},${ty - h} V${ty + h} ` +
                                   `M${ex - 4},${ty + h} h8` }, svg);
     el("circle", { class: "err-dot", cx: ex, cy: ty, r: 3 }, svg);
+    // What the bar is made of, stacked beside it. The three add in quadrature, so each segment is
+    // its share of the variance, not its own height: three segments drawn end to end would sum to
+    // more than the bar they sit next to.
+    if (un) {
+      const INK = { "between questions": "#4b5563", "between answers": "#c2410c",
+                    "between judges": "#cbd5e1" };
+      // The labels read down the list on their own leading, not at each segment's middle: the
+      // judge segment is a twentieth of the bar, so a midpoint label lands on its neighbour's.
+      // Clamped below the reference line, which the top of a tall bar otherwise strikes through.
+      let top = ty - h, ly = Math.max(ty - h + 4, py(1) + 12), sx = ex + 14;
+      for (const [name, sd] of Object.entries(un.parts)) {
+        const seg = 2 * h * (sd * sd) / (se * se);
+        // A 1px gap of the page behind, or the two small segments read as one dark block: the
+        // judge share is a fifteenth of the bar and lands about two pixels tall.
+        el("rect", { class: "err-part", x: sx, y: top, width: 7,
+                     height: Math.max(seg - 1, 0.6), fill: INK[name] || "#9ca3af" }, svg);
+        // Identity does not survive on a two-pixel sliver, so each label carries its own swatch.
+        el("rect", { class: "err-part", x: sx + 12, y: ly - 7, width: 7, height: 7,
+                     fill: INK[name] || "#9ca3af" }, svg);
+        Object.assign(el("text", { class: "err-text", x: sx + 24, y: ly }, svg),
+                      { textContent: `${name} ${sd.toFixed(3)}` });
+        top += seg;
+        ly += 13;
+      }
+    }
   }
 
   // What this is and where it came from, inside the axes so a cropped screenshot keeps it.
@@ -251,7 +281,10 @@ function draw(data, x, labs) {
       Object.assign(el("text", { class: "label", x: spot.cx, y: spot.cy + 5,
                                  "text-anchor": "middle" }, g), { textContent: r.model });
     g.addEventListener("pointerenter", e => {
-      tip.innerHTML = `<b>${r.model}</b><br>${r.company}<br>score ${r.score.toFixed(2)}` +
+      // The effort setting is one value for the whole sweep, so it rides the name rather than
+      // taking a line: a reader comparing two cards wants it where the names are.
+      tip.innerHTML = `<b>${r.model}</b> (${data.reasoning_effort})<br>${r.company}` +
+        `<br>score ${r.score.toFixed(2)}` + (r.fallback ? `<br>${r.fallback}` : "") +
         `<br>$${fmt(r["$/run"])} per run<br>${r.ktok ? r.ktok + "k tokens" : "tokens unknown"}`;
       tip.style.opacity = 1;
       tip.style.left = (e.clientX + 14) + "px";
@@ -322,10 +355,13 @@ function explain(table, data) {
     const help = data.columns[key] || byLabel[key];
     if (help) th.title = help;
   }
-  const full = Object.fromEntries(data.rows.map(r => [r.model, r.full]));
+  const meta = Object.fromEntries(data.rows.map(r => [r.model, r]));
   for (const tr of table.querySelectorAll("tbody tr")) {
-    const cell = tr.cells[0], name = cell.textContent.trim();
-    if (full[name] && full[name] !== name) cell.title = full[name];
+    const cell = tr.cells[0], name = cell.textContent.trim(), r = meta[name];
+    if (r)
+      cell.title = [r.full !== name ? r.full : null,
+                    `reasoning effort ${data.reasoning_effort}`, r.fallback]
+                     .filter(Boolean).join("\n");
     // An arm named after a skill says which document the model had open while it answered.
     cell.innerHTML = cell.innerHTML.replace(
       "skill:ml-debug", '<a href="https://github.com/wassname/ml-debug">skill:ml-debug</a>');
