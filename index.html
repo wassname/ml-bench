@@ -40,6 +40,8 @@
   .frontier { fill: none; stroke: #4b5563; stroke-width: 1.5; stroke-dasharray: 3 3; }
   .ref { stroke: var(--grey); stroke-width: 1; stroke-dasharray: 5 4; }
   .ref-text { font-size: 11px; fill: #6b7280; }
+  .corner { font-size: 12px; fill: #15803d; }
+  .corner-box { fill: #15803d14; stroke: #15803d40; }
   #tip { position: fixed; pointer-events: none; background: #fff; border: 1px solid var(--rule);
          border-radius: 4px; padding: .4rem .6rem; font-size: .85rem; box-shadow: 0 2px 8px #0002;
          opacity: 0; transition: opacity .1s; }
@@ -85,9 +87,13 @@ const SVG = "http://www.w3.org/2000/svg";
 const PAD = { l: 60, r: 30, t: 20, b: 50 };
 const W = 1000, H = 560;
 const RING = 13, LOGO = 15;
+// `corner` names the direction that is good, so a reader knows which way to look before reading
+// any point. Same wording as the png, which draws the same arrow.
 const AXES = {
-  "$/run": { title: "$ per run, all 12 items", fmt: v => "$" + fmt(v) },
-  "ktok": { title: "thousands of tokens per run, reasoning included", fmt: fmt },
+  "$/run": { title: "$ per run, all 12 items", fmt: v => "$" + fmt(v),
+             corner: "powerful and cheap" },
+  "ktok": { title: "thousands of tokens per run, reasoning included", fmt: fmt,
+            corner: "powerful and terse" },
 };
 
 function fmt(v) { return v >= 1 ? String(+v.toFixed(2)) : String(+v.toPrecision(2)); }
@@ -135,7 +141,9 @@ function draw(data, x, labs) {
   // Bounds come from every point, so filtering a lab moves nothing under it.
   const xs = rows.map(r => Math.log10(r[x]));
   const x0 = Math.min(...xs) - 0.25, x1 = Math.max(...xs) + 0.25;
-  const y1 = Math.max(1.05, Math.max(...rows.map(r => r.score)) + 0.08);
+  // Headroom above the 1.00 line, so its own label and the corner badge have room to sit and a
+  // point that reaches wassname's answer is not drawn on the top edge.
+  const y1 = Math.max(1.12, Math.max(...rows.map(r => r.score)) + 0.10);
   const y0 = Math.min(0, Math.min(...rows.map(r => r.score))) - 0.05;
   const px = v => PAD.l + (Math.log10(v) - x0) / (x1 - x0) * (W - PAD.l - PAD.r);
   const py = v => H - PAD.b - (v - y0) / (y1 - y0) * (H - PAD.t - PAD.b);
@@ -169,6 +177,13 @@ function draw(data, x, labs) {
   el("line", { class: "ref", x1: PAD.l, y1: py(1), x2: W - PAD.r, y2: py(1) }, svg);
   Object.assign(el("text", { class: "ref-text", x: PAD.l + 4, y: py(1) - 5 }, svg),
                 { textContent: "1.00 = wassname's own answer" });
+
+  // Which corner is good, said once, so nobody has to work it out from two axis titles. A badge
+  // rather than an arrow: an arrow into the corner crosses the reference line's own label.
+  const gy = py(1) + 12;
+  el("rect", { class: "corner-box", x: PAD.l + 6, y: gy, width: 132, height: 20, rx: 4 }, svg);
+  Object.assign(el("text", { class: "corner", x: PAD.l + 14, y: gy + 14 }, svg),
+                { textContent: "\u2196 " + AXES[x].corner });
 
   const front = frontier(shown, x);
   el("polyline", { class: "frontier",
