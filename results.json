@@ -99,7 +99,7 @@
    "score": 0.7578949156745047,
    "+-": 0.06,
    "answered": "12/12",
-   "$/run": 0.179217912,
+   "$/run": 0.17767293,
    "ktok": 175.002,
    "pts/Mtok": 4.330778594956085,
    "antipasto_sspace": 0.6630211393032615,
@@ -186,6 +186,29 @@
    "full": "deepseek/deepseek-v4-flash-0731"
   },
   {
+   "model": "deepseek-v4-flash-0731 (repeat:2)",
+   "company": "DeepSeek",
+   "score": 0.6849377303149791,
+   "+-": 0.082,
+   "answered": "12/12",
+   "$/run": 0.0369012,
+   "ktok": 128.105,
+   "pts/Mtok": 5.346690061394786,
+   "antipasto_sspace": 0.9514026279574018,
+   "cwsteer_bidirectional": 0.35893708109231276,
+   "isokl_calibration": 0.9348617583069733,
+   "mche_pinn": 0.11317558779831986,
+   "nan_poison": 0.862986283642522,
+   "one_loss_trick": 0.9817550118138196,
+   "pinn_clamp": 0.7661850802266242,
+   "seqvcr_loss": 0.6174734624809677,
+   "trm_adapter": 0.6438876819304153,
+   "ts_leakage_review": 0.4992251912313571,
+   "vgrout_signed_corda": 0.4809140020543017,
+   "vjp_delta": 1.0084489952447329,
+   "full": "deepseek/deepseek-v4-flash-0731"
+  },
+  {
    "model": "deepseek-v4-flash-0731",
    "company": "DeepSeek",
    "score": 0.6511289114415749,
@@ -237,9 +260,9 @@
    "score": 0.6032747381689957,
    "+-": 0.079,
    "answered": "12/12",
-   "$/run": null,
-   "ktok": null,
-   "pts/Mtok": null,
+   "$/run": 0.35609013,
+   "ktok": 256.034,
+   "pts/Mtok": 2.356229009307341,
    "antipasto_sspace": 0.7760405540058208,
    "cwsteer_bidirectional": 0.1385857323490312,
    "isokl_calibration": 0.66578309051106,
@@ -421,9 +444,9 @@
    "score": 0.531103667078069,
    "+-": 0.087,
    "answered": "12/12",
-   "$/run": null,
-   "ktok": null,
-   "pts/Mtok": null,
+   "$/run": 0.01102604,
+   "ktok": 83.066,
+   "pts/Mtok": 6.393755171527086,
    "antipasto_sspace": 0.37110209105343483,
    "cwsteer_bidirectional": 0.018319270345610247,
    "isokl_calibration": 0.42072441221391416,
@@ -467,9 +490,9 @@
    "score": 0.5042327420869379,
    "+-": 0.07,
    "answered": "12/12",
-   "$/run": null,
-   "ktok": null,
-   "pts/Mtok": null,
+   "$/run": 0.01717388,
+   "ktok": 48.177,
+   "pts/Mtok": 10.466254480082569,
    "antipasto_sspace": 0.4865475049310759,
    "cwsteer_bidirectional": 0.1771367166540139,
    "isokl_calibration": 0.5379624730856071,
@@ -490,9 +513,9 @@
    "score": 0.478161703011922,
    "+-": 0.075,
    "answered": "12/12",
-   "$/run": null,
-   "ktok": null,
-   "pts/Mtok": null,
+   "$/run": 0.014273699999999999,
+   "ktok": 9.131,
+   "pts/Mtok": 52.366849524906584,
    "antipasto_sspace": 0.3816592625059134,
    "cwsteer_bidirectional": 0.038205921378926706,
    "isokl_calibration": 0.5054141274426914,
@@ -674,37 +697,38 @@
     "gold": 0.9901,
     "gap": 0.98,
     "leniency": -0.017,
-    "judgments": 263
+    "judgments": 275
    },
    "openai/gpt-oss-120b": {
     "off_topic": -0.0158,
     "gold": 0.9962,
     "gap": 1.012,
     "leniency": 0.072,
-    "judgments": 251
+    "judgments": 263
    },
    "qwen/qwen3.7-flash": {
     "off_topic": -0.0037,
     "gold": 0.9923,
     "gap": 0.996,
-    "leniency": -0.012,
-    "judgments": 263
+    "leniency": -0.013,
+    "judgments": 275
    },
    "thinkingmachines/inkling-small": {
     "off_topic": -0.02,
     "gold": 0.9877,
     "gap": 1.008,
-    "leniency": -0.022,
-    "judgments": 275
+    "leniency": -0.021,
+    "judgments": 287
    }
   },
   "disagreement": {
-   "sd": 0.135,
-   "judgments_per_row": 53,
-   "se": 0.019
+   "sd": 0.134,
+   "judgments_per_row": 52,
+   "se": 0.018
   },
   "dropout": {
    "deepseek-v4-flash-0731": 0.005,
+   "deepseek-v4-flash-0731 (repeat:2)": 0.005,
    "deepseek-v4-flash-0731 (skill:ml-debug)": 0.005,
    "deepseek-v4-pro-0813": 0.005,
    "gemini-3.6-flash": 0.004,
@@ -717,8 +741,8 @@
    "qwen3.5-9b": 0.003,
    "qwen3.7-flash": 0.003,
    "qwen3.8-max": 0.003,
-   "inkling": 0.006,
-   "inkling-small": 0.006
+   "inkling": 0.005,
+   "inkling-small": 0.005
   }
  },
  "unanswered": [
