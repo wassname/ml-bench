@@ -225,7 +225,15 @@ fetch("results.json").then(r => r.json()).then(data => {
     };
     chips.appendChild(chip);
   }
-  document.getElementById("version").textContent = data.version;
+  // Who graded, who refused, and who read a sibling's score. A * cell is a refusal, not a zero.
+  const notes = [`${data.version}, graded by ${data.judge.models.join(", ")}, `
+                 + `${data.judge.passes} passes at temperature ${data.judge.temperature}`];
+  for (const [model, b] of Object.entries(data.borrowed || {}))
+    notes.push(`${model} refused ${b.refused} questions, and reads ${b.from}'s score on `
+               + `${b.items.length} of them, so that row measures a pair of models.`);
+  for (const u of data.unanswered || [])
+    notes.push(`${u.model} left ${u.question} blank: ${u.why}`);
+  document.getElementById("version").innerHTML = notes.join("<br>");
   redraw();
 });
 // Two markdown files: page.md is hand-written, results.md is what bench.py wrote for git, and the
