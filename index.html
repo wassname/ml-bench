@@ -199,24 +199,17 @@ function draw(data, x, labs) {
   // row carries the same bar, so drawing 21 of them would only add ink.
   const se = data.judge && data.judge.disagreement && data.judge.disagreement.se;
   if (se) {
-    // Top right, inside the headroom kept above the 1.00 line, which no point can occupy.
-    // Top left of the headroom, not top right: at the right edge it sat where a mouse pointer
-    // rests and read as a text cursor.
-    // Left half of the headroom, clear of the corner label. At the right edge it sat where a
-    // mouse pointer rests and read as a text cursor.
-    const ex = PAD.l + 210, ey = PAD.t + 22, h = Math.max(9, (py(0) - py(se)) / 2);
-    // A marker with whiskers, not a bare I-beam: on its own the I-beam reads as a text cursor.
-    el("path", { class: "err", d: `M${ex - 4},${ey - h} h8 M${ex},${ey - h} V${ey + h} ` +
-                                  `M${ex - 4},${ey + h} h8` }, svg);
-    el("circle", { class: "err-dot", cx: ex, cy: ey, r: 3 }, svg);
-    Object.assign(el("text", { class: "err-text", x: ex + 12, y: ey + 4 }, svg),
-                  { textContent: `±${se.toFixed(3)} judge uncertainty` });
+    // Directly under the reference line's own label and left-aligned with it, so the two notes
+    // read as one stack. The marker follows the text rather than leading it, to keep that edge.
+    const ty = py(1) + 18, h = Math.max(9, (py(0) - py(se)) / 2);
+    const label = `±${se.toFixed(3)} judge uncertainty`;
+    Object.assign(el("text", { class: "err-text", x: PAD.l + 4, y: ty + 4 }, svg),
+                  { textContent: label });
+    const ex = PAD.l + 14 + label.length * 6;
+    el("path", { class: "err", d: `M${ex - 4},${ty - h} h8 M${ex},${ty - h} V${ty + h} ` +
+                                  `M${ex - 4},${ty + h} h8` }, svg);
+    el("circle", { class: "err-dot", cx: ex, cy: ty, r: 3 }, svg);
   }
-
-  // What this is and where it came from, inside the axes so a cropped screenshot keeps it.
-  Object.assign(el("text", { class: "err-text", x: PAD.l + 8, y: H - PAD.b - 10 }, svg),
-                { textContent: "wassname's ML bench: 12 hard ML problems, " +
-                               "https://wassname.github.io/ml-bench/" });
 
   const front = frontier(shown, x);
   el("polyline", { class: "frontier",
