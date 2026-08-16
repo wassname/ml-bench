@@ -1,8 +1,12 @@
 # wassname-ml-bench
 
-Twelve hard machine learning problems from [wassname](https://wassname.org)'s own research, with a
-reference answer he wrote himself. The work post-dates the training data of the models here, so
-each model meets the question cold. A score of 1.00 matches his answer, and a model scores above
-1.00 when the judge finds something his answer got wrong.
+Which model should you work with on hard machine learning problems? Public leaderboards answer that
+with questions someone else wrote. This one asks twelve questions taken from
+[wassname](https://wassname.org)'s own research, each with the answer he reached at the time.
 
-The questions stay private. This page shows the scores and the domain of each question.
+The work is obscure, and some of it post-dates the models, so a model has to think its way there
+rather than recall it. A score of 1.00 means it reached his answer. Above 1.00 means the judge
+thought it beat him, and then he owes the question a better reference answer.
+
+The questions themselves stay behind the curtain, otherwise the next model trains on them. You get
+the scores, the domain of each question, and what the run cost.
