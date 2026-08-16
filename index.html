@@ -204,12 +204,13 @@ function draw(data, x, labs) {
                                   `M${ex - 4},${ey + h} h8` }, svg);
     Object.assign(el("text", { class: "err-text", x: ex - 10, y: ey + 4,
                                "text-anchor": "end" }, svg),
-                  { textContent: `±${se.toFixed(3)} judge uncertainty, same on every row` });
+                  { textContent: `±${se.toFixed(3)} judge uncertainty` });
   }
 
-  // Where the chart came from, so a screenshot can still be traced back.
-  Object.assign(el("text", { class: "err-text", x: PAD.l, y: H - 6 }, svg),
-                { textContent: "wassname.github.io/ml-bench" });
+  // What this is and where it came from, inside the axes so a cropped screenshot keeps it.
+  Object.assign(el("text", { class: "err-text", x: PAD.l + 8, y: H - PAD.b - 10 }, svg),
+                { textContent: "wassname's ML bench: 12 hard ML problems, " +
+                               "https://wassname.github.io/ml-bench/" });
 
   const front = frontier(shown, x);
   el("polyline", { class: "frontier",
