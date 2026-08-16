@@ -24,6 +24,28 @@
    "full": "z-ai/glm-5.2"
   },
   {
+   "model": "kimi-k3",
+   "company": "Moonshot AI",
+   "score": 0.6992884294354882,
+   "answered": "12/12",
+   "$/run": 0.12356400000000001,
+   "ktok": 7.67,
+   "pts/Mtok": 91.17189432014187,
+   "antipasto_sspace": 0.5454545454545454,
+   "cwsteer_bidirectional": 0.6,
+   "isokl_calibration": 0.8846153846153846,
+   "mche_pinn": 0.2619047619047619,
+   "nan_poison": 1.1111111111111112,
+   "one_loss_trick": 1.0833333333333333,
+   "pinn_clamp": 0.6904761904761905,
+   "seqvcr_loss": 0.6875,
+   "trm_adapter": 0.3,
+   "ts_leakage_review": 0.8431372549019608,
+   "vgrout_signed_corda": 0.5714285714285714,
+   "vjp_delta": 0.8125,
+   "full": "moonshotai/kimi-k3"
+  },
+  {
    "model": "muse-spark-1.2",
    "company": "Meta",
    "score": 0.6522532002311414,
@@ -376,10 +398,25 @@
  },
  "columns": {
   "model": "The model that answered the questions.",
-  "score": "The mean score of all 12 answers. 1.00 is wassname's own answer to the question.",
-  "answered": "How many of the 12 questions the model answered. Below 12 the score is blank, because a mean of fewer questions does not compare.",
-  "$/run": "What one run of all 12 questions costs. This is the model's own tokens. The judge is not included.",
-  "ktok": "Thousands of tokens the model wrote, reasoning included.",
-  "pts/Mtok": "Score for each million tokens. A model that writes more for the same score gets a lower number."
- }
+  "score": "The mean score of all 12 answers. 1.00 is wassname's own answer to the question. Above 1.00 means the judge preferred the model's answer.",
+  "answered": "How many of the 12 questions the model answered. Below 12 the mean is not comparable, so the score stays blank.",
+  "$/run": "The cost of one run of all 12 questions. This counts the model's own tokens, not the judge's.",
+  "ktok": "Thousands of tokens the model generated, reasoning included.",
+  "pts/Mtok": "Score per million tokens. A model that writes more for the same score ranks lower."
+ },
+ "judge": {
+  "models": [
+   "deepseek/deepseek-v4-pro-0813"
+  ],
+  "passes": 3,
+  "temperature": 0.7
+ },
+ "unanswered": [
+  {
+   "model": "claude-fable-5",
+   "question": "SV#8",
+   "why": "refused 3/3 attempts. refusal: This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see"
+  }
+ ],
+ "borrowed": {}
 }
