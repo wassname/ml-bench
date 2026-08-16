@@ -265,26 +265,26 @@
    "model": "minimax-m3",
    "company": "MiniMax",
    "fallback": null,
-   "score": 0.6459300648382136,
-   "+-": 0.076,
+   "score": 0.6529728345590601,
+   "+-": 0.078,
    "answered": "12/12",
-   "answers/q": 2,
-   "$/run": 0.175428,
-   "ktok": 144.308,
-   "pts/Mtok": 4.476051673075738,
-   "reasoning share": 0.884171355711395,
-   "antipasto_sspace": 0.7345989192436797,
+   "answers/q": 3,
+   "$/run": 0.22088999999999998,
+   "ktok": 182.2,
+   "pts/Mtok": 3.583824558501976,
+   "reasoning share": 0.9115587266739846,
+   "antipasto_sspace": 0.716607140928918,
    "cwsteer_bidirectional": 0.2184828507638542,
-   "isokl_calibration": 0.5553569520689947,
-   "mche_pinn": 0.17076132032301616,
-   "nan_poison": 0.9905986784798886,
+   "isokl_calibration": 0.5828265564706989,
+   "mche_pinn": 0.14928275503049326,
+   "nan_poison": 0.974056821470218,
    "one_loss_trick": 1.050076252733667,
    "pinn_clamp": 0.6859543863192235,
-   "seqvcr_loss": 0.6170350455442211,
-   "trm_adapter": 0.49760299819985876,
-   "ts_leakage_review": 0.8244795693468849,
-   "vgrout_signed_corda": 0.7352165555396034,
-   "vjp_delta": 0.6709972494956709,
+   "seqvcr_loss": 0.5995356586916936,
+   "trm_adapter": 0.5047189636578673,
+   "ts_leakage_review": 0.7556245677023516,
+   "vgrout_signed_corda": 0.8281487839856195,
+   "vjp_delta": 0.7703592769541161,
    "full": "minimax/minimax-m3"
   },
   {
@@ -716,41 +716,41 @@
     "off_topic": -0.0076,
     "gold": 0.997,
     "gap": 1.005,
-    "leniency": -0.057,
-    "judgments": 660
+    "leniency": -0.056,
+    "judgments": 670
    },
    "google/gemma-4-31b-it": {
     "off_topic": 0.0103,
     "gold": 0.9901,
     "gap": 0.98,
     "leniency": -0.012,
-    "judgments": 642
+    "judgments": 652
    },
    "openai/gpt-oss-120b": {
     "off_topic": -0.0158,
     "gold": 0.9962,
     "gap": 1.012,
     "leniency": 0.079,
-    "judgments": 606
+    "judgments": 616
    },
    "qwen/qwen3.7-flash": {
     "off_topic": -0.0037,
     "gold": 0.9923,
     "gap": 0.996,
-    "leniency": 0.003,
-    "judgments": 666
+    "leniency": 0.004,
+    "judgments": 675
    },
    "thinkingmachines/inkling-small": {
     "off_topic": -0.02,
     "gold": 0.9877,
     "gap": 1.008,
     "leniency": -0.014,
-    "judgments": 690
+    "judgments": 700
    }
   },
   "disagreement": {
    "sd": 0.178,
-   "judgments_per_row": 136,
+   "judgments_per_row": 133,
    "se": 0.015
   },
   "dropout": {
@@ -765,18 +765,19 @@
    "gpt-oss-120b": -0.02,
    "qwen3.5-9b": -0.001,
    "qwen3.7-flash": -0.001,
+   "qwen3.8-27b": -0.001,
    "qwen3.8-max": -0.001,
-   "inkling": 0.003,
-   "inkling-small": 0.003
+   "inkling": 0.004,
+   "inkling-small": 0.004
   }
  },
  "uncertainty": {
-  "model": "claude-fable-5",
-  "draws": 1,
-  "total": 0.056,
+  "model": "deepseek-v4-flash-0731",
+  "draws": 3,
+  "total": 0.067,
   "parts": {
-   "between questions": 0.038,
-   "between answers": 0.037,
+   "between questions": 0.061,
+   "between answers": 0.021,
    "between judges": 0.015
   }
  },
@@ -789,17 +790,17 @@
   {
    "model": "claude-fable-5",
    "question": "OL#6",
-   "why": "refused 3/3 attempts. refusal: This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback."
+   "why": "refused 3/3 attempts. no refusal text, native_finish_reason=max_tokens"
   },
   {
    "model": "claude-fable-5",
    "question": "OL#6",
-   "why": "refused 3/3 attempts. no refusal text, native_finish_reason=max_tokens"
+   "why": "refused 3/3 attempts. refusal: This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback."
   },
   {
    "model": "claude-fable-5",
    "question": "SV#8",
-   "why": "refused 3/3 attempts. no refusal text, native_finish_reason=max_tokens"
+   "why": "refused 3/3 attempts. refusal: This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback."
   },
   {
    "model": "claude-fable-5",
@@ -809,7 +810,7 @@
   {
    "model": "claude-fable-5",
    "question": "SV#8",
-   "why": "refused 3/3 attempts. refusal: This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback."
+   "why": "refused 3/3 attempts. no refusal text, native_finish_reason=max_tokens"
   },
   {
    "model": "claude-fable-5",
