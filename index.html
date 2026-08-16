@@ -223,22 +223,34 @@ function draw(data, x, labs) {
                    points: front.map(r => `${px(r[x])},${py(r.score)}`).join(" ") }, svg);
 
   const tip = document.getElementById("tip");
+  // Label only what a reader is looking for: the frontier, and each lab's best model. Labelling
+  // all 25 buried the points under their own names, and everything else is one hover away.
+  const named = new Set(front.map(r => r.model));
+  const best = {};
+  for (const r of shown)
+    if (!best[r.company] || r.score > best[r.company].score) best[r.company] = r;
+  for (const r of Object.values(best)) named.add(r.model);
   // Every marker is an obstacle for every label, its own included.
   const taken = shown.map(r => box(px(r[x]), py(r.score), RING * 2, RING * 2));
   for (const r of shown) {
     const g = el("g", {}, svg);
     const cx = px(r[x]), cy = py(r.score);
-    const spot = place(cx, cy, r.model.length * 6.6 + 4, 15, taken);
-    taken.push(spot);
-    // A label pushed away from its point needs a line back, or it reads as the nearest one's.
-    if (Math.hypot(spot.cx - cx, spot.cy - cy) > RING + 16)
-      el("line", { class: "leader", x1: cx, y1: cy, x2: spot.cx,
-                   y2: spot.cy + (spot.cy > cy ? -8 : 8) }, g);
+    // Leader first, then the marker over it, or the line is drawn across the logo.
+    const spot = named.has(r.model)
+      ? place(cx, cy, r.model.length * 6.6 + 4, 15, taken) : null;
+    if (spot) {
+      taken.push(spot);
+      // A label pushed away from its point needs a line back, or it reads as the nearest one's.
+      if (Math.hypot(spot.cx - cx, spot.cy - cy) > RING + 16)
+        el("line", { class: "leader", x1: cx, y1: cy, x2: spot.cx,
+                     y2: spot.cy + (spot.cy > cy ? -8 : 8) }, g);
+    }
     el("circle", { class: "ring", cx: cx, cy: cy, r: RING }, g);
     el("image", { href: data.logos[r.company], x: cx - LOGO / 2, y: cy - LOGO / 2,
                   width: LOGO, height: LOGO, preserveAspectRatio: "xMidYMid meet" }, g);
-    Object.assign(el("text", { class: "label", x: spot.cx, y: spot.cy + 5,
-                               "text-anchor": "middle" }, g), { textContent: r.model });
+    if (spot)
+      Object.assign(el("text", { class: "label", x: spot.cx, y: spot.cy + 5,
+                                 "text-anchor": "middle" }, g), { textContent: r.model });
     g.addEventListener("pointerenter", e => {
       tip.innerHTML = `<b>${r.model}</b><br>${r.company}<br>score ${r.score.toFixed(2)}` +
         `<br>$${fmt(r["$/run"])} per run<br>${r.ktok ? r.ktok + "k tokens" : "tokens unknown"}`;
