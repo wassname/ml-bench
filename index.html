@@ -44,6 +44,7 @@
   .corner-box { fill: #15803d14; stroke: #15803d40; }
   .err { stroke: #6b7280; stroke-width: 1.2; fill: none; }
   .err-text { font-size: 11px; fill: #6b7280; }
+  .err-dot { fill: #6b7280; }
   #tip { position: fixed; pointer-events: none; background: #fff; border: 1px solid var(--rule);
          border-radius: 4px; padding: .4rem .6rem; font-size: .85rem; box-shadow: 0 2px 8px #0002;
          opacity: 0; transition: opacity .1s; }
@@ -199,9 +200,11 @@ function draw(data, x, labs) {
   const se = data.judge && data.judge.disagreement && data.judge.disagreement.se;
   if (se) {
     // Top right, inside the headroom kept above the 1.00 line, which no point can occupy.
-    const ex = W - PAD.r - 10, ey = PAD.t + 22, h = Math.max(4, (py(0) - py(se)) / 2);
+    const ex = W - PAD.r - 10, ey = PAD.t + 22, h = Math.max(9, (py(0) - py(se)) / 2);
+    // A marker with whiskers, not a bare I-beam: on its own the I-beam reads as a text cursor.
     el("path", { class: "err", d: `M${ex - 4},${ey - h} h8 M${ex},${ey - h} V${ey + h} ` +
                                   `M${ex - 4},${ey + h} h8` }, svg);
+    el("circle", { class: "err-dot", cx: ex, cy: ey, r: 3 }, svg);
     Object.assign(el("text", { class: "err-text", x: ex - 10, y: ey + 4,
                                "text-anchor": "end" }, svg),
                   { textContent: `±${se.toFixed(3)} judge uncertainty` });
