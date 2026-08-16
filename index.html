@@ -146,7 +146,7 @@ function draw(data, x, labs) {
   const x0 = Math.min(...xs) - 0.25, x1 = Math.max(...xs) + 0.25;
   // The floor follows the data. Pinned at 0 it spent half the chart on empty space when the
   // weakest model scored 0.38, and 0 keeps its meaning in the caption rather than on the axis.
-  const y0 = Math.min(...rows.map(r => r.score)) - 0.05;
+  const y0 = Math.min(...rows.map(r => r.score)) - 0.09;
   // Room above the 1.00 line for its own label and the corner text, asked for in pixels and
   // solved back into score units, so the gap holds whatever the scores do. In score units alone a
   // model scoring 1.30 would squeeze the label out.
