@@ -200,13 +200,16 @@ function draw(data, x, labs) {
   const se = data.judge && data.judge.disagreement && data.judge.disagreement.se;
   if (se) {
     // Top right, inside the headroom kept above the 1.00 line, which no point can occupy.
-    const ex = W - PAD.r - 10, ey = PAD.t + 22, h = Math.max(9, (py(0) - py(se)) / 2);
+    // Top left of the headroom, not top right: at the right edge it sat where a mouse pointer
+    // rests and read as a text cursor.
+    // Left half of the headroom, clear of the corner label. At the right edge it sat where a
+    // mouse pointer rests and read as a text cursor.
+    const ex = PAD.l + 210, ey = PAD.t + 22, h = Math.max(9, (py(0) - py(se)) / 2);
     // A marker with whiskers, not a bare I-beam: on its own the I-beam reads as a text cursor.
     el("path", { class: "err", d: `M${ex - 4},${ey - h} h8 M${ex},${ey - h} V${ey + h} ` +
                                   `M${ex - 4},${ey + h} h8` }, svg);
     el("circle", { class: "err-dot", cx: ex, cy: ey, r: 3 }, svg);
-    Object.assign(el("text", { class: "err-text", x: ex - 10, y: ey + 4,
-                               "text-anchor": "end" }, svg),
+    Object.assign(el("text", { class: "err-text", x: ex + 12, y: ey + 4 }, svg),
                   { textContent: `±${se.toFixed(3)} judge uncertainty` });
   }
 
