@@ -85,8 +85,9 @@
 </style>
 <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
 
-<!-- The prose lives in page.md, so editing it means editing markdown, never this file. The lede
-     goes here and the rest under the table, so the chart is the first thing on the page. -->
+<!-- The prose lives in results.md, which bench.py renders from docs/page.md.j2 in the private repo.
+     Editing a sentence means editing that template, never this file. The lede goes here and the
+     rest under the table, so the chart is the first thing on the page. -->
 <div id="intro"></div>
 
 <!-- The chart is hand-drawn by the script below, so a reader with no javascript, or a failed
@@ -123,10 +124,15 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
 // Proleptic Gregorian day number, the unit python's date.toordinal uses, so a fit measured in
 // bench.py can be evaluated here without converting its slope.
 const ORD0 = 719163;
+let nItems = 0;
 const ord = iso => Math.round(Date.parse(iso + "T00:00:00Z") / 864e5) + ORD0;
 const asDate = v => new Date((v - ORD0) * 864e5);
+// The three fit axes have a png twin drawn by `_VS_AXES` in bench.py. The wording differs on
+// purpose, a png carries a title and a subtitle block while this carries an axis label and one
+// note, but a claim changed in one place has to be changed in the other.
 const AXES = {
-  "$/run": { title: "$ per run, all 12 items", fmt: v => "$" + fmt(v), scale: "log",
+  // `nItems` is filled from results.json once it lands, so this label cannot disagree with the bench.
+  "$/run": { title: () => `$ per run, all ${nItems} items`, fmt: v => "$" + fmt(v), scale: "log",
              corner: "powerful and cheap", x: r => r["$/run"] },
   "ktok": { title: "thousands of tokens per run, reasoning included", fmt: fmt, scale: "log",
             corner: "powerful and terse", x: r => r.ktok },
@@ -290,7 +296,7 @@ function draw(data, x, labs, svg) {
   }
   Object.assign(el("text", { class: "title", x: (W + PAD.l) / 2, y: H - 8,
                              "text-anchor": "middle" }, axis),
-                { textContent: ax.title });
+                { textContent: typeof ax.title === "function" ? ax.title() : ax.title });
   Object.assign(el("text", { class: "title", x: 16, y: (H - PAD.b + PAD.t) / 2,
                              "text-anchor": "middle",
                              transform: `rotate(-90 16 ${(H - PAD.b + PAD.t) / 2})` }, axis),
@@ -471,6 +477,7 @@ const SECTIONS = [];
 let redrawAll = () => {};
 
 fetch("results.json").then(r => r.json()).then(data => {
+  nItems = Object.keys(data.items).length;
   const axisSel = document.getElementById("axis");
   const on = new Set(data.rows.map(r => r.company));
   const redraw = () => {
