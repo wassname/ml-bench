@@ -10,15 +10,15 @@
          font: 16px/1.55 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
   h1 { font-size: 1.6rem; margin: 0 0 .3rem; }
   p.lede { color: #4b5563; margin: 0 0 1.5rem; max-width: 62ch; }
-  .controls { display: flex; gap: 1.5rem; align-items: center; margin: 1.5rem 0 .5rem;
-              font-size: .85rem; color: #6b7280; flex-wrap: wrap; }
+  .controls { display: flex; gap: 1rem; align-items: center; margin: .8rem 0 0;
+              font-size: .78rem; color: #6b7280; flex-wrap: wrap; }
   .controls label { display: flex; gap: .45rem; align-items: center; }
   /* Labs are a set, so they toggle one by one. A dropdown would only let a reader pick one. */
   .chips { display: flex; gap: .3rem; align-items: center; flex-wrap: wrap; }
-  .chip { display: flex; gap: .3rem; align-items: center; padding: .25rem .5rem; cursor: pointer;
+  .chip { display: flex; gap: .25rem; align-items: center; padding: .15rem .4rem; cursor: pointer;
           border: 1px solid var(--rule); border-radius: 999px; background: #fff; font: inherit;
           color: var(--ink); }
-  .chip img { width: 13px; height: 13px; }
+  .chip img { width: 11px; height: 11px; }
   .chip[aria-pressed="false"] { color: var(--grey); background: #f9fafb; }
   .chip[aria-pressed="false"] img { opacity: .3; }
   .chip:hover { border-color: var(--grey); }
@@ -29,7 +29,15 @@
            appearance: none; cursor: pointer; }
   select:hover { border-color: var(--grey); }
   select:focus-visible { outline: 2px solid #2563eb; outline-offset: 1px; }
-  svg { display: block; width: 100%; height: auto; }
+  svg, #chartpng { display: block; width: 100%; height: auto; }
+  /* This rule, after the one above, is what makes `hidden` on the svg work: an author `display`
+     beats the browser's own `[hidden]` rule, so without it a reader with no javascript got the
+     fallback png and an empty 1000x560 box under it. */
+  #chart[hidden] { display: none; }
+  /* The notes are what a reader reaches after the numbers, so they read like the table's own. */
+  #notes { margin-top: 2.5rem; max-width: 72ch; }
+  #notes h2 { font-size: 1.15rem; margin: 2rem 0 .4rem; }
+  #notes p { color: #4b5563; font-size: .9rem; }
   .axis line, .axis path { stroke: #6b7280; }
   .axis text { font-size: 14px; fill: #374151; }
   .axis .title { font-size: 15px; fill: var(--ink); }
@@ -38,6 +46,11 @@
   .label { font-size: 13px; fill: var(--ink); }
   .leader { stroke: #d1d5db; stroke-width: 1; }
   .frontier { fill: none; stroke: #4b5563; stroke-width: 1.5; stroke-dasharray: 3 3; }
+  /* The fitted line and the uncertainty in where that line sits. Grey, not a series colour: it is
+     the same ink as the reference line, because both are annotation rather than data. */
+  .fitline { fill: none; stroke: #4b5563; stroke-width: 2; }
+  .son { fill: none; stroke: #c2410c; stroke-width: 2; stroke-dasharray: 6 3; }
+  .band { fill: #4b5563; opacity: .10; stroke: none; }
   .ref { stroke: var(--grey); stroke-width: 1; stroke-dasharray: 5 4; }
   .ref-text { font-size: 11px; fill: #6b7280; }
   .corner { font-size: 12px; fill: #15803d; }
@@ -51,6 +64,8 @@
   /* results.md, rendered. The table is the reason this page exists, so it gets the typography:
      numbers align on the decimal, the model name stays put while the 12 item columns scroll. */
   #table { margin-top: 2.5rem; }
+  /* The two charts bench.py drew as pngs: the public index fit and the release date fit. */
+  #table img { display: block; width: 100%; height: auto; margin: 1.2rem 0; }
   #table h2 { font-size: 1.15rem; margin: 2rem 0 .4rem; }
   #table h3 { font-size: 1rem; margin: 1.6rem 0 .4rem; }
   #table p, #table sub { color: #4b5563; font-size: .9rem; }
@@ -70,33 +85,92 @@
 </style>
 <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
 
-<!-- The prose lives in page.md, so editing it means editing markdown, never this file. -->
+<!-- The prose lives in page.md, so editing it means editing markdown, never this file. The lede
+     goes here and the rest under the table, so the chart is the first thing on the page. -->
 <div id="intro"></div>
 
+<!-- The chart is hand-drawn by the script below, so a reader with no javascript, or a failed
+     fetch, would see an empty box. The png bench.py drew holds the same numbers, and it is the
+     only thing here that is not built at load time. -->
+<img id="chartpng" src="pareto.png" alt="score against cost, drawn by bench.py">
+<svg id="chart" viewBox="0 0 1000 560" role="img" aria-label="score against cost" hidden></svg>
+<!-- Under the chart, not above it: they are for a second look, and above the chart they were the
+     first thing on the page after the lede. -->
 <div class="controls">
   <div id="labs" class="chips">labs</div>
-  <label>cost as <select id="axis">
+  <label>score against <select id="axis">
     <option value="$/run">dollars per run</option>
     <option value="ktok">thousands of tokens</option>
+    <option value="index">public intelligence index</option>
+    <option value="hle">Humanity's Last Exam</option>
+    <option value="released">release date</option>
   </select></label>
 </div>
-<svg id="chart" viewBox="0 0 1000 560" role="img" aria-label="score against cost"></svg>
 <div id="tip"></div>
 <div id="table"></div>
-<footer id="version"></footer>
+<div id="notes"></div>
 
 <script>
 const SVG = "http://www.w3.org/2000/svg";
 const PAD = { l: 60, r: 30, t: 20, b: 50 };
 const W = 1000, H = 560;
 const RING = 13, LOGO = 15;
-// `corner` names the direction that is good, so a reader knows which way to look before reading
-// any point. Same wording as the png, which draws the same arrow.
+// One drawer, four x axes. `corner` names the direction that is good on a cost axis, so a reader
+// knows which way to look; `fit` names the straight line in results.json to draw with its own
+// uncertainty, which is what the two public axes want instead of a Pareto step.
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+// Proleptic Gregorian day number, the unit python's date.toordinal uses, so a fit measured in
+// bench.py can be evaluated here without converting its slope.
+const ORD0 = 719163;
+const ord = iso => Math.round(Date.parse(iso + "T00:00:00Z") / 864e5) + ORD0;
+const asDate = v => new Date((v - ORD0) * 864e5);
 const AXES = {
-  "$/run": { title: "$ per run, all 12 items", fmt: v => "$" + fmt(v),
-             corner: "powerful and cheap" },
-  "ktok": { title: "thousands of tokens per run, reasoning included", fmt: fmt,
-            corner: "powerful and terse" },
+  "$/run": { title: "$ per run, all 12 items", fmt: v => "$" + fmt(v), scale: "log",
+             corner: "powerful and cheap", x: r => r["$/run"] },
+  "ktok": { title: "thousands of tokens per run, reasoning included", fmt: fmt, scale: "log",
+            corner: "powerful and terse", x: r => r.ktok },
+  "index": { title: "Artificial Analysis intelligence index, public tests", scale: "linear",
+             fmt: v => String(Math.round(v)), fit: "index", x: r => r.index,
+             note: "a model below the line does worse here than its public score predicts" },
+  "hle": { title: "Humanity's Last Exam, a STEM exam, percent, Artificial Analysis' own run",
+           scale: "linear",
+           fmt: v => String(Math.round(v)) + "%", fit: "hle", x: r => r.hle,
+           note: "a second public test, and a STEM exam rather than an index of many" },
+  // `humans` puts wassname and his son on the chart, which is what this view is for. It needs a
+  // floor of 0 rather than one that follows the models, since a toddler scores near it.
+  "released": { title: "release date", scale: "date", humans: true,
+                fmt: v => { const d = asDate(v);
+                            return MONTHS[d.getUTCMonth()] + " " + d.getUTCFullYear(); },
+                fit: "released", x: r => r.released && ord(r.released),
+                note: "the line, extended, and these models were picked to fill a table" },
+};
+
+// A log axis is drawn in log units, the other two in their own units, so the position rule and the
+// tick rule both hang off `scale`.
+const POS = { log: Math.log10, linear: v => v, date: v => v };
+const TICKS = {
+  // One tick per decade: on a cost axis the numbers that matter are the powers of ten.
+  log: (a, b) => { const out = [];
+                   for (let d = Math.ceil(a); d <= Math.floor(b); d++) out.push(Math.pow(10, d));
+                   return out; },
+  linear: (a, b) => { const raw = (b - a) / 6;
+                      const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+                      const step = [1, 2, 2.5, 5, 10].find(s => s * mag >= raw) * mag;
+                      const out = [];
+                      for (let v = Math.ceil(a / step) * step; v <= b; v += step) out.push(v);
+                      return out; },
+  // Month starts, so a tick is a date a reader recognises rather than day 739800.
+  date: (a, b) => { const step = b - a > 1200 ? 6 : b - a > 600 ? 3 : 1;
+                    const d = asDate(a), out = [];
+                    let y = d.getUTCFullYear(), m = Math.floor(d.getUTCMonth() / step) * step;
+                    for (;;) {
+                      const v = Math.round(Date.UTC(y, m, 1) / 864e5) + ORD0;
+                      if (v > b) return out;
+                      if (v >= a) out.push(v);
+                      m += step;
+                      if (m > 11) { m -= 12; y++; }
+                    } },
 };
 
 function fmt(v) { return v >= 1 ? String(+v.toFixed(2)) : String(+v.toPrecision(2)); }
@@ -127,6 +201,26 @@ function place(cx, cy, w, h, taken) {
   return box(cx, cy - 22, w, h);
 }
 
+// Least squares over the points on the chart, in the same form bench.py stores: the band needs
+// `sd`, `n`, `mean` and `sxx`, and the date axis needs where the line reaches 1.00. Null under 3
+// points, since 2 points fit exactly and would draw a band of zero width.
+function refit(rows, ax) {
+  if (rows.length < 3) return null;
+  const xs = rows.map(r => ax.x(r)), ys = rows.map(r => r.score);
+  const mean = xs.reduce((a, b) => a + b, 0) / xs.length;
+  const ybar = ys.reduce((a, b) => a + b, 0) / ys.length;
+  const sxx = xs.reduce((a, q) => a + (q - mean) ** 2, 0);
+  const slope = xs.reduce((a, q, i) => a + (q - mean) * (ys[i] - ybar), 0) / sxx;
+  const intercept = ybar - slope * mean;
+  const resid = ys.map((y, i) => y - (intercept + slope * xs[i]));
+  // n-2, two parameters fitted, the same denominator bench.py uses.
+  const sd = Math.sqrt(resid.reduce((a, e) => a + e * e, 0) / (rows.length - 2));
+  const syy = ys.reduce((a, y) => a + (y - ybar) ** 2, 0);
+  return { slope, intercept, sd, n: rows.length, mean, sxx, resid,
+           r: slope * Math.sqrt(sxx / syy), models: rows.map(r => r.model),
+           reachOrd: slope > 0 && ax.scale === "date" ? (1 - intercept) / slope : null };
+}
+
 // Points that nothing else beats on both axes: less cost AND more score.
 function frontier(rows, x) {
   const out = [];
@@ -136,37 +230,57 @@ function frontier(rows, x) {
   return out;
 }
 
-function draw(data, x, labs) {
-  const svg = document.getElementById("chart");
+function draw(data, x, labs, svg) {
+  svg = svg || document.getElementById("chart");
+  // removeAttribute, not `svg.hidden = false`: on an SVG element that assignment sets a plain js
+  // property and leaves the attribute in place, so the chart stayed display:none and the page
+  // showed the fallback png for a moment and then nothing.
+  svg.removeAttribute("hidden");
+  document.getElementById("chartpng")?.remove();  // gone already on a redraw
   svg.textContent = "";
-  const rows = data.rows.filter(r => r[x]);
+  const ax = AXES[x], at = POS[ax.scale];
+  const rows = data.rows.filter(r => ax.x(r));
+  // The stored fit covers every model. The reader can switch labs off, so the line is re-fitted
+  // over what is on the chart, and falls back to the stored one when too few points are left for
+  // the band to mean anything.
+  const shownFit = ax.fit && refit(rows.filter(r => labs.has(r.company)), ax);
+  const fit = shownFit || (ax.fit && data.fits[ax.fit]);
   const shown = rows.filter(r => labs.has(r.company));
   // Bounds come from every point, so filtering a lab moves nothing under it.
-  const xs = rows.map(r => Math.log10(r[x]));
-  const x0 = Math.min(...xs) - 0.25, x1 = Math.max(...xs) + 0.25;
+  const xs = rows.map(r => at(ax.x(r)));
+  // The date axis runs past the last model, to where the fitted line reaches 1.00. That crossing is
+  // the point of the chart, so cutting the axis at the newest model would cut the answer off.
+  const reach = fit && (fit.reachOrd ?? (fit.reach ? ord(fit.reach) : null));
+  // Five years past the newest model is the stop. A refit over one lab can be nearly flat, and its
+  // crossing date then sits in the next century and squeezes every model into the left edge.
+  const last = Math.max(...rows.map(r => ax.x(r)));
+  const far = reach && reach - last < 5 * 365 ? at(reach) : -Infinity;
+  const lo = Math.min(...xs), hi = Math.max(Math.max(...xs), far);
+  const pad = ax.scale === "log" ? 0.25 : (hi - lo) * 0.06;
+  const x0 = lo - pad, x1 = hi + pad;
   // The floor follows the data. Pinned at 0 it spent half the chart on empty space when the
-  // weakest model scored 0.38, and 0 keeps its meaning in the caption rather than on the axis.
-  const y0 = Math.min(...rows.map(r => r.score)) - 0.09;
+  // weakest model scored 0.38, and 0 keeps its meaning in the caption rather than on the axis. The
+  // one exception is the view that carries a toddler, who starts at 0.
+  const y0 = ax.humans ? 0 : Math.min(...rows.map(r => r.score)) - 0.09;
   // Room above the 1.00 line for its own label and the corner text, asked for in pixels and
   // solved back into score units, so the gap holds whatever the scores do. In score units alone a
   // model scoring 1.30 would squeeze the label out.
   const gap = 56 / (H - PAD.t - PAD.b);
   const y1 = Math.max((1 - gap * y0) / (1 - gap),
                       Math.max(...rows.map(r => r.score)) + 0.08);
-  const px = v => PAD.l + (Math.log10(v) - x0) / (x1 - x0) * (W - PAD.l - PAD.r);
+  const px = v => PAD.l + (at(v) - x0) / (x1 - x0) * (W - PAD.l - PAD.r);
   const py = v => H - PAD.b - (v - y0) / (y1 - y0) * (H - PAD.t - PAD.b);
+  const clip = v => Math.min(H - PAD.b, Math.max(PAD.t, py(v)));
 
   const grid = el("g", { class: "grid" }, svg);
   const axis = el("g", { class: "axis" }, svg);
   el("line", { x1: PAD.l, y1: H - PAD.b, x2: W - PAD.r, y2: H - PAD.b }, axis);
   el("line", { x1: PAD.l, y1: PAD.t, x2: PAD.l, y2: H - PAD.b }, axis);
-  // One tick per decade on x: the numbers that matter are the powers of ten.
-  for (let d = Math.ceil(x0); d <= Math.floor(x1); d++) {
-    const v = Math.pow(10, d);
+  for (const v of TICKS[ax.scale](x0, x1)) {
     el("line", { x1: px(v), y1: PAD.t, x2: px(v), y2: H - PAD.b }, grid);
     el("line", { x1: px(v), y1: H - PAD.b, x2: px(v), y2: H - PAD.b + 5 }, axis);
     Object.assign(el("text", { x: px(v), y: H - PAD.b + 20, "text-anchor": "middle" }, axis),
-                  { textContent: AXES[x].fmt(v) });
+                  { textContent: ax.fmt(v) });
   }
   for (let v = Math.ceil(y0 * 5) / 5; v <= y1; v += 0.2) {
     el("line", { x1: PAD.l, y1: py(v), x2: W - PAD.r, y2: py(v) }, grid);
@@ -176,7 +290,7 @@ function draw(data, x, labs) {
   }
   Object.assign(el("text", { class: "title", x: (W + PAD.l) / 2, y: H - 8,
                              "text-anchor": "middle" }, axis),
-                { textContent: AXES[x].title });
+                { textContent: ax.title });
   Object.assign(el("text", { class: "title", x: 16, y: (H - PAD.b + PAD.t) / 2,
                              "text-anchor": "middle",
                              transform: `rotate(-90 16 ${(H - PAD.b + PAD.t) / 2})` }, axis),
@@ -184,16 +298,35 @@ function draw(data, x, labs) {
 
   el("line", { class: "ref", x1: PAD.l, y1: py(1), x2: W - PAD.r, y2: py(1) }, svg);
   Object.assign(el("text", { class: "ref-text", x: PAD.l + 4, y: py(1) - 5 }, svg),
-                { textContent: "1.00 = wassname's own answer" });
+                { textContent: ax.humans ? "wassname, flat: 1.00 is his own answer"
+                                         : "1.00 = wassname's own answer" });
+
+  // wassname's own ask: his son on the same axes as the models, 0 in 2024 and 0.05 a year, to make
+  // the point that the models climb faster than the child does and that his own line does not move.
+  if (ax.humans) {
+    const son = q => 0.05 * (q - ord("2024-01-01")) / 365.25;
+    el("polyline", { class: "son", points: [x0, x1].map(q => `${px(q)},${clip(son(q))}`).join(" ") },
+       svg);
+    Object.assign(el("text", { class: "ref-text", x: W - PAD.r - 4, y: py(son(x1)) - 8,
+                               "text-anchor": "end" }, svg),
+                  { textContent: "wassname's son, 0 in 2024 and 0.05 a year" });
+  }
 
   // Which corner is good, said once, so nobody has to work it out from two axis titles. A badge
   // rather than an arrow: an arrow into the corner crosses the reference line's own label.
-  const wedge = 0.30 * (W - PAD.l - PAD.r), drop = 0.42 * (H - PAD.t - PAD.b);
-  el("polygon", { class: "corner-box",
-                  points: `${PAD.l},${PAD.t} ${PAD.l + wedge},${PAD.t} ${PAD.l},${PAD.t + drop}` },
-     svg);
-  Object.assign(el("text", { class: "corner", x: PAD.l + 10, y: PAD.t + 16 }, svg),
-                { textContent: AXES[x].corner });
+  // A fit axis has no good corner: up and to the right is just newer or better on a public test, so
+  // it carries the line's own note instead.
+  if (ax.corner) {
+    const wedge = 0.30 * (W - PAD.l - PAD.r), drop = 0.42 * (H - PAD.t - PAD.b);
+    el("polygon", { class: "corner-box",
+                    points: `${PAD.l},${PAD.t} ${PAD.l + wedge},${PAD.t} ${PAD.l},${PAD.t + drop}` },
+       svg);
+    Object.assign(el("text", { class: "corner", x: PAD.l + 10, y: PAD.t + 16 }, svg),
+                  { textContent: ax.corner });
+  } else {
+    Object.assign(el("text", { class: "corner", x: PAD.l + 10, y: PAD.t + 16 }, svg),
+                  { textContent: ax.note });
+  }
 
   // One representative error bar, bottom right, where no model plots: expensive and weak. Every
   // row carries the same bar, so drawing 21 of them would only add ink.
@@ -247,23 +380,53 @@ function draw(data, x, labs) {
                 { textContent: "wassname's ML bench: 12 hard ML problems, " +
                                "https://wassname.github.io/ml-bench/" });
 
-  const front = frontier(shown, x);
-  el("polyline", { class: "frontier",
-                   points: front.map(r => `${px(r[x])},${py(r.score)}`).join(" ") }, svg);
+  // A cost axis gets the Pareto step. A public-number axis gets the least-squares line and the
+  // standard error of that line, s*sqrt(1/n + (q-xbar)^2/Sxx), which is the uncertainty in where
+  // the line sits, not the spread of the models around it.
+  let named;
+  if (fit) {
+    const band = [], under = [];
+    for (let i = 0; i <= 60; i++) {
+      const q = x0 + (x1 - x0) * i / 60;
+      const line = fit.intercept + fit.slope * q;
+      const se = fit.sd * Math.sqrt(1 / fit.n + Math.pow(q - fit.mean, 2) / fit.sxx);
+      band.push(`${px(q)},${clip(line + se)}`);
+      under.push(`${px(q)},${clip(line - se)}`);
+    }
+    el("polygon", { class: "band", points: band.concat(under.reverse()).join(" ") }, svg);
+    el("polyline", { class: "fitline", points: band.map((p, i) => {
+      const q = x0 + (x1 - x0) * i / 60;
+      return `${px(q)},${clip(fit.intercept + fit.slope * q)}`;
+    }).join(" ") }, svg);
+    Object.assign(el("text", { class: "err-text", x: W - PAD.r - 4, y: H - PAD.b - 26,
+                               "text-anchor": "end" }, svg),
+                  { textContent: `r ${fit.r.toFixed(2)}, ${fit.n} models, ` +
+                                 `models scatter ±${fit.sd.toFixed(3)} about the line` });
+    // Name the models the line misses, since the miss is what this view is for.
+    const resid = {};
+    fit.models.forEach((m, i) => { resid[m] = fit.resid[i]; });
+    named = new Set([...shown].sort((a, b) => Math.abs(resid[b.model] || 0) -
+                                              Math.abs(resid[a.model] || 0))
+                              .slice(0, 6).map(r => r.model));
+  } else {
+    const front = frontier(shown, x);
+    el("polyline", { class: "frontier",
+                     points: front.map(r => `${px(ax.x(r))},${py(r.score)}`).join(" ") }, svg);
+    // Label only what a reader is looking for: the frontier, and each lab's best model. Labelling
+    // all 25 buried the points under their own names, and everything else is one hover away.
+    named = new Set(front.map(r => r.model));
+  }
 
   const tip = document.getElementById("tip");
-  // Label only what a reader is looking for: the frontier, and each lab's best model. Labelling
-  // all 25 buried the points under their own names, and everything else is one hover away.
-  const named = new Set(front.map(r => r.model));
   const best = {};
   for (const r of shown)
     if (!best[r.company] || r.score > best[r.company].score) best[r.company] = r;
   for (const r of Object.values(best)) named.add(r.model);
   // Every marker is an obstacle for every label, its own included.
-  const taken = shown.map(r => box(px(r[x]), py(r.score), RING * 2, RING * 2));
+  const taken = shown.map(r => box(px(ax.x(r)), py(r.score), RING * 2, RING * 2));
   for (const r of shown) {
     const g = el("g", {}, svg);
-    const cx = px(r[x]), cy = py(r.score);
+    const cx = px(ax.x(r)), cy = py(r.score);
     // Leader first, then the marker over it, or the line is drawn across the logo.
     const spot = named.has(r.model)
       ? place(cx, cy, r.model.length * 6.6 + 4, 15, taken) : null;
@@ -285,7 +448,11 @@ function draw(data, x, labs) {
       // taking a line: a reader comparing two cards wants it where the names are.
       tip.innerHTML = `<b>${r.model}</b> (${data.reasoning_effort})<br>${r.company}` +
         `<br>score ${r.score.toFixed(2)}` + (r.fallback ? `<br>${r.fallback}` : "") +
-        `<br>$${fmt(r["$/run"])} per run<br>${r.ktok ? r.ktok + "k tokens" : "tokens unknown"}`;
+        // On a fit axis the miss is the number a reader wants, so it replaces the cost pair.
+        (fit ? `<br>${ax.fmt(ax.x(r))}<br>` +
+               `${(r.score - (fit.intercept + fit.slope * ax.x(r))).toFixed(3)} against the line`
+             : `<br>$${fmt(r["$/run"])} per run<br>` +
+               `${r.ktok ? r.ktok + "k tokens" : "tokens unknown"}`);
       tip.style.opacity = 1;
       tip.style.left = (e.clientX + 14) + "px";
       tip.style.top = (e.clientY + 14) + "px";
@@ -294,10 +461,23 @@ function draw(data, x, labs) {
   }
 }
 
+// Each png in results.md has a live twin on this axis, so the page swaps it for an svg and the png
+// stays the fallback: on GitHub, in a screenshot, and until this data arrives.
+const PNG_AXIS = { "sandbagging.png": "index", "hle.png": "hle", "timeline.png": "released",
+                   "pareto.png": "$/run", "pareto_tokens.png": "ktok" };
+// {svg, axis} per section chart, filled once results.md is rendered. `redrawAll` is replaced by the
+// real one below, so whichever fetch lands second draws everything.
+const SECTIONS = [];
+let redrawAll = () => {};
+
 fetch("results.json").then(r => r.json()).then(data => {
   const axisSel = document.getElementById("axis");
   const on = new Set(data.rows.map(r => r.company));
-  const redraw = () => draw(data, axisSel.value, on);
+  const redraw = () => {
+    draw(data, axisSel.value, on);
+    for (const s of SECTIONS) draw(data, s.axis, on, s.svg);
+  };
+  redrawAll = redraw;
   axisSel.onchange = redraw;
   const chips = document.getElementById("labs");
   for (const c of [...on].sort()) {
@@ -317,30 +497,38 @@ fetch("results.json").then(r => r.json()).then(data => {
     };
     chips.appendChild(chip);
   }
-  // Who refused, and who read a sibling's score. A * cell is a refusal, not a zero. The judge
-  // panel is named in the table's own note, so it is not repeated here.
-  const notes = [];
-  for (const [model, b] of Object.entries(data.borrowed || {}))
-    notes.push(`${model} refused ${b.refused} questions, and reads ${b.from}'s score on `
-               + `${b.items.length} of them, so that row measures a pair of models.`);
-  for (const u of data.unanswered || [])
-    notes.push(`${u.model} left ${u.question} blank: ${u.why}`);
-  document.getElementById("version").innerHTML = notes.join("<br>");
+  // Refusals and blank cells are words, so they belong to results.md and are not written twice.
   redraw();
 });
-// Two markdown files: page.md is hand-written, results.md is what bench.py wrote for git, and the
-// page renders the same table a reader would see on GitHub.
-fetch("page.md").then(r => r.text()).then(md => {
-  document.getElementById("intro").innerHTML = marked.parse(md);
-});
+// One markdown file. wassname edits docs/page.md.j2 in the private repo, bench.py puts the numbers
+// in it, and this is the result: the same page a reader sees on GitHub.
+//
+// It splits at its first `## `: the lede goes above the chart, and every section after it goes
+// under the table. The chart is what a reader came for, so it does not sit below four paragraphs.
 Promise.all([
   fetch("results.md").then(r => r.text()),
   fetch("results.json").then(r => r.json()),
 ]).then(([md, data]) => {
-  document.getElementById("table").innerHTML = marked.parse(md);
-  const table = document.querySelector("#table table");
-  shade(table);
-  explain(table, data);
+  const cut = md.indexOf("\n## ");
+  document.getElementById("intro").innerHTML = marked.parse(cut < 0 ? "" : md.slice(0, cut));
+  document.getElementById("table").innerHTML = marked.parse(cut < 0 ? md : md.slice(cut));
+  for (const img of document.querySelectorAll("#table img")) {
+    const axis = PNG_AXIS[(img.getAttribute("src") || "").split("/").pop()];
+    if (!axis) continue;
+    const svg = document.createElementNS(SVG, "svg");
+    svg.setAttribute("viewBox", "0 0 1000 560");
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", img.alt);
+    svg.style.width = "100%";
+    img.replaceWith(svg);
+    SECTIONS.push({ svg, axis });
+  }
+  redrawAll();
+  const tables = [...document.querySelectorAll("#table table")];
+  // The main table shades its 12 question columns. Every other table here, the variants one, gets
+  // its score column shaded on its own scale, so the two read the same way.
+  tables.forEach((t, i) => shade(t, i === 0 ? /#\d+/ : /^score$/));
+  explain(tables[0], data);
 });
 
 // The markdown table carries short labels, because the full model id and a sentence per column
@@ -348,8 +536,9 @@ Promise.all([
 // hover instead.
 function explain(table, data) {
   if (!table) return;
+  // Keyed on the column label. The item id stays in the private repo: it names the method.
   const byLabel = Object.fromEntries(
-    Object.values(data.items).map(i => [i.label, `Score for the ${i.domain} question.`]));
+    Object.entries(data.items).map(([label, i]) => [label, `Score for the ${i.domain} question.`]));
   for (const th of table.querySelectorAll("thead th")) {
     const key = th.textContent.trim().replace(/[↑↓]$/, "");
     const help = data.columns[key] || byLabel[key];
@@ -371,10 +560,10 @@ function explain(table, data) {
 // Twelve numeric columns are hard to compare by eye. Tinting each cell by its value turns them
 // into a strip of small multiples: dark where a model matched wassname, pale where it fell into
 // the traps, with the numbers still there to read.
-function shade(table) {
+function shade(table, want) {
   if (!table) return;
   const head = [...table.querySelectorAll("thead th")].map(th => th.textContent.trim());
-  const cols = head.map((h, i) => /#\d+/.test(h) ? i : -1).filter(i => i >= 0);
+  const cols = head.map((h, i) => want.test(h) ? i : -1).filter(i => i >= 0);
   const rows = [...table.querySelectorAll("tbody tr")];
   const vals = rows.flatMap(tr => cols.map(i => parseFloat(tr.cells[i]?.textContent)))
                    .filter(v => !isNaN(v));
