@@ -67,52 +67,10 @@ qualifies. Eval version 96.
 How much does a skill or higher effort increase a model's score? Each row is the same model on the
 same 12 questions with one thing changed. `lift` is against the default row, paired by
 question, so a lift is real only when it beats `lift +-`.
-
-## Sandbagging? No
-
-<!-- The two paragraphs below are wassname's own words. -- wassname -->
-
-Some of the frontier models are known or suspected to do poorly on machine learning tasks
-(sandbagging), [Anthropic has admitted and walked back one of these](https://old.reddit.com/r/MachineLearning/comments/1u2tk0i/anthropic_walks_back_policy_on_silent_nerfing_for/)
-but other providers face the same competitive pressures and are often less forthcoming. This is
-because labs are using their models to build the infrastructure for their own models, but they are
-in a race, and don't want their competitors to use a commercial service to compete.
-
-Since I often use AI models for machine learning tasks I wanted to know which ones are purposely
-doing poorly (sandbagging). So I see how good they should be, according to their overall
-capabilities, and see which models do worse than predicted. This would be evidence of sandbagging but I don't see any.
-
-![score against the public intelligence index](sandbagging.png)
-
-![score against Humanity's Last Exam](hle.png)
-
-## Score vs release date
-
-When will a model be as good as me (wassname)? <!-- -- wassname -->
-
-![score against release date](timeline.png)
+ 
 
 ## Notes on the main table
 
 claude-fable-5 refuses questions its provider blocks, 2 of 12 in at least one draw. 1 stayed blocked in every draw (SV#8). Those cells take claude-opus-5's score, shown in italic. The row then measures a pair of models, and $/run counts only its own tokens.
 
 What the `+-` bar is made of, measured on qwen3.8-max over 3 answers to each question, in row units and added in quadrature: between questions 0.063, between answers 0.022, between judges 0.015. They come to 0.068, against 0.075 on a single answer, and that row's own `+-` of 0.071, which is the spread of its 12 cells, is the other way of measuring the same bar. Only the middle part shrinks with more answers; the first needs more questions.
- #}
-
-### The judges
-
-We use multiple judges. To avoid bias each judge is read through its own two anchors, so a point
-means the same on every judge. To avoid self bias we remove all judgement of models from the same
-company, including their own. This is fine because the calibration and the number of judges keep the
-mean score about the same. <!-- -- wassname -->
-
-Below we show how each judge grades an off topic answer (should be zero) and an ideal answer (should
-be one).
-
-| judge                           |   judgments |   off-topic |   gold |    gap |   leniency |
-|:--------------------------------|------------:|------------:|-------:|-------:|-----------:|
-| openai/gpt-oss-120b             |         917 |      -0.016 | +0.996 | +1.012 |     +0.074 |
-| qwen/qwen3.7-flash              |         905 |      -0.004 | +0.992 | +0.996 |     -0.004 |
-| google/gemma-4-31b-it           |         965 |      +0.010 | +0.990 | +0.980 |     -0.006 |
-| thinkingmachines/inkling-small  |        1001 |      -0.020 | +0.988 | +1.008 |     -0.011 |
-| deepseek/deepseek-v4-flash-0731 |         918 |      -0.008 | +0.997 | +1.005 |     -0.053 |
