@@ -145,11 +145,12 @@ const AXES = {
            note: "a second public test, and a STEM exam rather than an index of many" },
   // `humans` puts wassname and his son on the chart, which is what this view is for. It needs a
   // floor of 0 rather than one that follows the models, since a toddler scores near it.
-  "released": { title: "release date", scale: "date", humans: true,
+  "released": { title: "release date", scale: "date", humans: true, logGap: true,
                 fmt: v => { const d = asDate(v);
                             return MONTHS[d.getUTCMonth()] + " " + d.getUTCFullYear(); },
                 fit: "released", x: r => r.released && ord(r.released),
-                note: "the line, extended, and these models were picked to fill a table" },
+                note: "the running best, fitted on the gap to 1.00, and these models were "
+                      + "picked to fill a table" },
 };
 
 // A log axis is drawn in log units, the other two in their own units, so the position rule and the
@@ -211,8 +212,13 @@ function place(cx, cy, w, h, taken) {
 // `sd`, `n`, `mean` and `sxx`, and the date axis needs where the line reaches 1.00. Null under 3
 // points, since 2 points fit exactly and would draw a band of zero width.
 function refit(rows, ax) {
+  // METR's shape on the date axis: the running best only, and the gap to 1.00 rather than the
+  // score, so the line approaches wassname's answer instead of crossing it. Same fit bench.py
+  // draws into timeline.png.
+  if (ax.logGap) rows = frontier(rows, ax.x);
   if (rows.length < 3) return null;
-  const xs = rows.map(r => ax.x(r)), ys = rows.map(r => r.score);
+  const xs = rows.map(r => ax.x(r));
+  const ys = rows.map(r => ax.logGap ? Math.log10(1 - r.score) : r.score);
   const mean = xs.reduce((a, b) => a + b, 0) / xs.length;
   const ybar = ys.reduce((a, b) => a + b, 0) / ys.length;
   const sxx = xs.reduce((a, q) => a + (q - mean) ** 2, 0);
@@ -222,16 +228,33 @@ function refit(rows, ax) {
   // n-2, two parameters fitted, the same denominator bench.py uses.
   const sd = Math.sqrt(resid.reduce((a, e) => a + e * e, 0) / (rows.length - 2));
   const syy = ys.reduce((a, y) => a + (y - ybar) ** 2, 0);
-  return { slope, intercept, sd, n: rows.length, mean, sxx, resid,
+  return { slope, intercept, sd, n: rows.length, mean, sxx, resid, log: !!ax.logGap,
            r: slope * Math.sqrt(sxx / syy), models: rows.map(r => r.model),
-           reachOrd: slope > 0 && ax.scale === "date" ? (1 - intercept) / slope : null };
+           // A log-gap line never reaches 1.00, so the date it is asked for is 0.95, within 0.05
+           // of wassname's answer.
+           reachOrd: ax.scale !== "date" ? null
+                     : ax.logGap ? (slope < 0 ? (Math.log10(0.05) - intercept) / slope : null)
+                                 : (slope > 0 ? (1 - intercept) / slope : null) };
 }
 
-// Points that nothing else beats on both axes: less cost AND more score.
+// The fitted line and its band at q, in score units whichever space the fit was made in. A log fit
+// lives in log10 of the gap to 1.00, and that map flips: a smaller gap is a higher score.
+function curve(fit, q) {
+  const line = fit.intercept + fit.slope * q;
+  const se = fit.sd * Math.sqrt(1 / fit.n + Math.pow(q - fit.mean, 2) / fit.sxx);
+  return fit.log ? [1 - Math.pow(10, line), 1 - Math.pow(10, line + se), 1 - Math.pow(10, line - se)]
+                 : [line, line - se, line + se];
+}
+
+// Months for the gap to wassname's answer to halve, which is what a log slope means.
+const halving = fit => 12 * Math.log10(2) / -(fit.slope * 365.25);
+
+// Points that nothing else beats on both axes: less x AND more score. On a cost axis that is the
+// Pareto step; on the date axis it is the running best.
 function frontier(rows, x) {
   const out = [];
   let best = -Infinity;
-  for (const r of [...rows].sort((a, b) => a[x] - b[x] || b.score - a.score))
+  for (const r of [...rows].sort((a, b) => x(a) - x(b) || b.score - a.score))
     if (r.score > best) { out.push(r); best = r.score; }
   return out;
 }
@@ -391,23 +414,23 @@ function draw(data, x, labs, svg) {
   // the line sits, not the spread of the models around it.
   let named;
   if (fit) {
-    const band = [], under = [];
+    const band = [], under = [], mid = [];
     for (let i = 0; i <= 60; i++) {
       const q = x0 + (x1 - x0) * i / 60;
-      const line = fit.intercept + fit.slope * q;
-      const se = fit.sd * Math.sqrt(1 / fit.n + Math.pow(q - fit.mean, 2) / fit.sxx);
-      band.push(`${px(q)},${clip(line + se)}`);
-      under.push(`${px(q)},${clip(line - se)}`);
+      const [line, lo, hi] = curve(fit, q);
+      mid.push(`${px(q)},${clip(line)}`);
+      band.push(`${px(q)},${clip(hi)}`);
+      under.push(`${px(q)},${clip(lo)}`);
     }
     el("polygon", { class: "band", points: band.concat(under.reverse()).join(" ") }, svg);
-    el("polyline", { class: "fitline", points: band.map((p, i) => {
-      const q = x0 + (x1 - x0) * i / 60;
-      return `${px(q)},${clip(fit.intercept + fit.slope * q)}`;
-    }).join(" ") }, svg);
+    el("polyline", { class: "fitline", points: mid.join(" ") }, svg);
     Object.assign(el("text", { class: "err-text", x: W - PAD.r - 4, y: H - PAD.b - 26,
                                "text-anchor": "end" }, svg),
-                  { textContent: `r ${fit.r.toFixed(2)}, ${fit.n} models, ` +
-                                 `models scatter ±${fit.sd.toFixed(3)} about the line` });
+                  { textContent: fit.log
+                      ? `r ${fit.r.toFixed(2)}, the gap to 1.00 halves every ` +
+                        `${halving(fit).toFixed(0)} months over the ${fit.n} models on the frontier`
+                      : `r ${fit.r.toFixed(2)}, ${fit.n} models, ` +
+                        `models scatter ±${fit.sd.toFixed(3)} about the line` });
     // Name the models the line misses, since the miss is what this view is for.
     const resid = {};
     fit.models.forEach((m, i) => { resid[m] = fit.resid[i]; });
@@ -415,7 +438,7 @@ function draw(data, x, labs, svg) {
                                               Math.abs(resid[a.model] || 0))
                               .slice(0, 6).map(r => r.model));
   } else {
-    const front = frontier(shown, x);
+    const front = frontier(shown, ax.x);
     el("polyline", { class: "frontier",
                      points: front.map(r => `${px(ax.x(r))},${py(r.score)}`).join(" ") }, svg);
     // Label only what a reader is looking for: the frontier, and each lab's best model. Labelling
@@ -456,7 +479,7 @@ function draw(data, x, labs, svg) {
         `<br>score ${r.score.toFixed(2)}` + (r.fallback ? `<br>${r.fallback}` : "") +
         // On a fit axis the miss is the number a reader wants, so it replaces the cost pair.
         (fit ? `<br>${ax.fmt(ax.x(r))}<br>` +
-               `${(r.score - (fit.intercept + fit.slope * ax.x(r))).toFixed(3)} against the line`
+               `${(r.score - curve(fit, ax.x(r))[0]).toFixed(3)} against the line`
              : `<br>$${fmt(r["$/run"])} per run<br>` +
                `${r.ktok ? r.ktok + "k tokens" : "tokens unknown"}`);
       tip.style.opacity = 1;
