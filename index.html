@@ -145,12 +145,12 @@ const AXES = {
            note: "a second public test, and a STEM exam rather than an index of many" },
   // `humans` puts wassname and his son on the chart, which is what this view is for. It needs a
   // floor of 0 rather than one that follows the models, since a toddler scores near it.
-  "released": { title: "release date", scale: "date", humans: true, logGap: true,
+  // `best` fits the running best rather than every model, which is what a date chart usually shows.
+  "released": { title: "release date", scale: "date", humans: true, best: true,
                 fmt: v => { const d = asDate(v);
                             return MONTHS[d.getUTCMonth()] + " " + d.getUTCFullYear(); },
                 fit: "released", x: r => r.released && ord(r.released),
-                note: "the running best, fitted on the gap to 1.00, and these models were "
-                      + "picked to fill a table" },
+                note: "the running best, extended, and these models were picked to fill a table" },
 };
 
 // A log axis is drawn in log units, the other two in their own units, so the position rule and the
@@ -212,13 +212,11 @@ function place(cx, cy, w, h, taken) {
 // `sd`, `n`, `mean` and `sxx`, and the date axis needs where the line reaches 1.00. Null under 3
 // points, since 2 points fit exactly and would draw a band of zero width.
 function refit(rows, ax) {
-  // METR's shape on the date axis: the running best only, and the gap to 1.00 rather than the
-  // score, so the line approaches wassname's answer instead of crossing it. Same fit bench.py
-  // draws into timeline.png.
-  if (ax.logGap) rows = frontier(rows, ax.x);
+  // The date axis fits the running best, not every model, the same models bench.py fits into
+  // timeline.png. A straight line, so it reaches 1.00 on a date.
+  if (ax.best) rows = frontier(rows, ax.x);
   if (rows.length < 3) return null;
-  const xs = rows.map(r => ax.x(r));
-  const ys = rows.map(r => ax.logGap ? Math.log10(1 - r.score) : r.score);
+  const xs = rows.map(r => ax.x(r)), ys = rows.map(r => r.score);
   const mean = xs.reduce((a, b) => a + b, 0) / xs.length;
   const ybar = ys.reduce((a, b) => a + b, 0) / ys.length;
   const sxx = xs.reduce((a, q) => a + (q - mean) ** 2, 0);
@@ -228,26 +226,18 @@ function refit(rows, ax) {
   // n-2, two parameters fitted, the same denominator bench.py uses.
   const sd = Math.sqrt(resid.reduce((a, e) => a + e * e, 0) / (rows.length - 2));
   const syy = ys.reduce((a, y) => a + (y - ybar) ** 2, 0);
-  return { slope, intercept, sd, n: rows.length, mean, sxx, resid, log: !!ax.logGap,
+  return { slope, intercept, sd, n: rows.length, mean, sxx, resid,
            r: slope * Math.sqrt(sxx / syy), models: rows.map(r => r.model),
-           // A log-gap line never reaches 1.00, so the date it is asked for is 0.95, within 0.05
-           // of wassname's answer.
-           reachOrd: ax.scale !== "date" ? null
-                     : ax.logGap ? (slope < 0 ? (Math.log10(0.05) - intercept) / slope : null)
-                                 : (slope > 0 ? (1 - intercept) / slope : null) };
+           reachOrd: slope > 0 && ax.scale === "date" ? (1 - intercept) / slope : null };
 }
 
-// The fitted line and its band at q, in score units whichever space the fit was made in. A log fit
-// lives in log10 of the gap to 1.00, and that map flips: a smaller gap is a higher score.
+// The fitted line and its band at q: s*sqrt(1/n + (q-xbar)^2/Sxx), the uncertainty in where the
+// line sits, not the spread of the models around it.
 function curve(fit, q) {
   const line = fit.intercept + fit.slope * q;
   const se = fit.sd * Math.sqrt(1 / fit.n + Math.pow(q - fit.mean, 2) / fit.sxx);
-  return fit.log ? [1 - Math.pow(10, line), 1 - Math.pow(10, line + se), 1 - Math.pow(10, line - se)]
-                 : [line, line - se, line + se];
+  return [line, line - se, line + se];
 }
-
-// Months for the gap to wassname's answer to halve, which is what a log slope means.
-const halving = fit => 12 * Math.log10(2) / -(fit.slope * 365.25);
 
 // Points that nothing else beats on both axes: less x AND more score. On a cost axis that is the
 // Pareto step; on the date axis it is the running best.
@@ -426,11 +416,9 @@ function draw(data, x, labs, svg) {
     el("polyline", { class: "fitline", points: mid.join(" ") }, svg);
     Object.assign(el("text", { class: "err-text", x: W - PAD.r - 4, y: H - PAD.b - 26,
                                "text-anchor": "end" }, svg),
-                  { textContent: fit.log
-                      ? `r ${fit.r.toFixed(2)}, the gap to 1.00 halves every ` +
-                        `${halving(fit).toFixed(0)} months over the ${fit.n} models on the frontier`
-                      : `r ${fit.r.toFixed(2)}, ${fit.n} models, ` +
-                        `models scatter ±${fit.sd.toFixed(3)} about the line` });
+                  { textContent: `r ${fit.r.toFixed(2)}, ${fit.n} models` +
+                                 (ax.best ? " on the frontier" : "") +
+                                 `, models scatter ±${fit.sd.toFixed(3)} about the line` });
     // Name the models the line misses, since the miss is what this view is for.
     const resid = {};
     fit.models.forEach((m, i) => { resid[m] = fit.resid[i]; });
