@@ -168,6 +168,10 @@ MODELS = {
     "hle": [
         "openrouter/qwen/qwen3.5-9b",
         "openrouter/openai/gpt-oss-120b",
+        # Two 2023-2024 flagships, each the frontier of its own month, so the release-date axis
+        # starts before this table's cheap models. Neither takes a reasoning effort setting.
+        "openrouter/openai/gpt-4",
+        "openrouter/openai/o1",
         # Six older flagships, so the release-date axis is not cheap models on the left and
         # frontier ones on the right.
         "openrouter/qwen/qwen3.5-27b",
@@ -1034,13 +1038,17 @@ def wassname_ml_bench(
     skill: str | None = None,
     draw: int = 1,
     provider: dict | None = None,
+    max_tokens: int = ANSWER_MAX_TOKENS,
 ) -> Task:
     # An uplift variant is its own row in the table, keyed on this scope, so it never shares a
     # cached answer with the bare model. A non-default effort is a variant too: a model told to think
     # harder is a different candidate, and without this its answers merge into the bare row.
     # Both parts, so a skill run at a non-default effort does not file under the skill row alone.
+    # A model with no reasoning setting at all, like gpt-4, is already at its floor, so it files
+    # under the bare row rather than under a variant nothing else can be compared with.
     variant = ([f"skill:{Path(skill).parent.name}"] if skill else []) + (
-        [] if reasoning == REASONING else [f"effort:{reasoning['reasoning']['effort']}"])
+        [] if reasoning in (REASONING, {})
+        else [f"effort:{reasoning['reasoning']['effort']}"])
     cache_scope = cache_scope or " ".join(variant) or None
     return Task(
         dataset=bench_dataset(items, skill),
@@ -1048,7 +1056,7 @@ def wassname_ml_bench(
         scorer=rubric_judge(judge_model, judge_passes, judge_temperature, judge_max_tokens),
         epochs=Epochs(epochs, "mean"),
         config=GenerateConfig(
-            max_tokens=ANSWER_MAX_TOKENS,
+            max_tokens=max_tokens,
             max_connections=MAX_CONNECTIONS,
             max_retries=MAX_RETRIES,
             extra_body=reasoning | (provider or {}),
@@ -1130,6 +1138,12 @@ def _graded_logs(log_dir: str, any_version: bool = False, any_status: bool = Fal
         yield log
 
 
+# The lowest effort a model will accept, where that is above the bench's own setting. o1 rejects
+# `minimal` ("Supported values are: 'low', 'medium', and 'high'"), so its floor is its bare row.
+# Without this it has only a variant row, no row to lift against, and no place on the timeline.
+EFFORT_FLOOR = {"openrouter/openai/o1": "low"}
+
+
 def _variant(log) -> str:
     """The key a score is reported under: the model, plus the uplift variant when it ran with one.
 
@@ -1139,6 +1153,8 @@ def _variant(log) -> str:
     Calibration scopes are not variants: those rows are keyed on the mock model instead.
     """
     scope = log.eval.metadata.get("cache_scope") or ""
+    if scope == f"effort:{EFFORT_FLOOR.get(log.eval.model)}":
+        return log.eval.model
     return (f"{log.eval.model} ({scope})"
             if scope.startswith(("skill:", "effort:")) else log.eval.model)
 
@@ -1466,6 +1482,11 @@ def _results(log_dir: str, judge: str) -> None:
         for sample in log.samples:
             variant = _variant(log)
             if not sample.scores:
+                # The request itself failed, so there is no answer and no row. o1's two 404 runs
+                # left a bare o1 row of 0/12 beside its real effort:low row, and the uplift table
+                # then subtracted a None.
+                if sample.error is not None:
+                    continue
                 # No score at all: the judge failed on an answer that exists, which is a fault in
                 # this harness and not a fact about the model. Kept apart from a refusal, because
                 # counting it as one told readers Anthropic blocks a question it never saw.
@@ -1675,8 +1696,9 @@ def _results(log_dir: str, judge: str) -> None:
         low, high = min(zip(fit["resid"], fit["models"])), max(zip(fit["resid"], fit["models"]))
         fit["worst"] = {"model": low[1], "resid": low[0]}
         fit["best"] = {"model": high[1], "resid": high[0]}
-        fit["per_year"] = fit["slope"] * 365.25
-        fit["half"] = _halving_months(fit) if fit["log"] else None
+        # A log fit's slope is a rate, so it reports a doubling time and not a score per year.
+        fit["per_year"] = None if fit["log"] else fit["slope"] * 365.25
+        fit["half"] = _doubling_months(fit) if fit["log"] else None
         fit["reach_month"] = f"{date.fromisoformat(fit['reach']):%B %Y}" if fit["reach"] else None
     below = index_fit["worst"]["model"]
     # The uplift table holds the one measurement that tests the effort story on the worst row, so
@@ -2022,20 +2044,22 @@ RELEASED = {
     "deepseek-v4-pro-0813": "2026-08-13", "qwen3.8-27b": "2026-08-14",
     "qwen3.5-27b": "2026-02-24", "glm-5.1": "2026-04-07", "qwen3.6-27b": "2026-04-22",
     "gpt-5.5": "2026-04-23", "claude-opus-4.8": "2026-05-28", "grok-4.5": "2026-07-08",
+    # OpenAI's own announcement days, not AA, which lists neither.
+    "gpt-4": "2023-03-14", "o1": "2024-12-05",
 }
 
 
 def _fit(x, y, log: bool = False) -> dict:
     """Least squares line, kept as parameters so the band and the residuals come from one fit.
 
-    With `log` the fit is on log10 of the gap to 1.00, so the line approaches wassname's answer and
-    never crosses it. Its slope is a halving time, and its `sd` is in log units, not score units.
+    With `log` the fit is on log10 of the score, so the line is an exponential in score units. Its
+    slope is a doubling time, and its `sd` is in log units, not score units.
     """
     import numpy as np
 
     x, y = np.asarray(x, float), np.asarray(y, float)
     if log:
-        y = np.log10(1.0 - y)
+        y = np.log10(y)
     slope, intercept = np.polyfit(x, y, 1)
     resid = y - (slope * x + intercept)
     return {"slope": float(slope), "intercept": float(intercept), "log": log,
@@ -2061,39 +2085,42 @@ def _fit_at(fit: dict, q):
 def _curve(fit: dict, q):
     """The line and its band at q, in score units, whichever space the fit was made in.
 
-    A log fit lives in log10 of the gap to 1.00, and that map flips: a smaller gap is a higher
-    score, so the top of the band comes from the bottom of the log band.
+    A log fit lives in log10 of the score, so the line and its band come back through 10**.
     """
     line, se = _fit_at(fit, q)
     if fit["log"]:
-        return 1 - 10 ** line, 1 - 10 ** (line + se), 1 - 10 ** (line - se)
+        return 10 ** line, 10 ** (line - se), 10 ** (line + se)
     return line, line - se, line + se
 
 
-def _reach(fit: dict, target: float = 0.95):
-    """Where the line reaches `target`. A log fit never reaches 1.00, so it is asked for 0.95."""
+def _reach(fit: dict, target: float = 1.0):
+    """Where the line reaches `target`, in x units."""
     if fit["log"]:
-        return (math.log10(1 - target) - fit["intercept"]) / fit["slope"] if fit["slope"] < 0 else None
-    return (1.0 - fit["intercept"]) / fit["slope"] if fit["slope"] > 0 else None
+        return (math.log10(target) - fit["intercept"]) / fit["slope"] if fit["slope"] > 0 else None
+    return (target - fit["intercept"]) / fit["slope"] if fit["slope"] > 0 else None
 
 
-def _halving_months(fit: dict) -> float:
-    """Months for the gap to wassname's answer to halve, which is what a log slope means."""
-    return 12 * math.log10(2) / -(fit["slope"] * 365.25)
+def _doubling_months(fit: dict) -> float:
+    """Months for the score to double, which is what a log slope means."""
+    return 12 * math.log10(2) / (fit["slope"] * 365.25)
 
 
 def _running_best(table: list[dict]) -> list[tuple[int, float, str]]:
-    """The models nothing older beats, by release day: METR's frontier, and this chart's fit."""
+    """The frontier: a model is kept only if it beats every model released before it.
+
+    This is what the chart fits, at wassname's asking. Each point is a record, so the line reads as
+    the best available on a date rather than the average of what happened to be tested.
+    """
     pts = sorted((date.fromisoformat(RELEASED[name]).toordinal(), row["score"], name)
                  for row in table
                  for name in [row["model"].split(" (")[0]]
                  if row["score"] is not None and name in RELEASED)
-    out, best = [], -math.inf
+    front, best = [], -math.inf
     for day, score, name in pts:
         if score > best:
-            out.append((day, score, name))
             best = score
-    return out
+            front.append((day, score, name))
+    return front
 
 
 def _frontier(table: list[dict], x: str) -> set[str]:
@@ -2313,16 +2340,17 @@ _VS_AXES = {
                  "title": "How long until a model reaches wassname's own answer?",
                  # The caveat rides the chart, not only the page: a png gets screenshotted alone,
                  # and this one names a year, which reads as a forecast unless the chart says no.
-                 "subtitle": "A straight line through the running best of this table, extended to "
-                             "1.00.<br>The band is one standard error on the line, and these "
-                             "models were picked to fill a table, not sampled over time"},
+                 "subtitle": "An exponential through the frontier, the models that beat every "
+                             "earlier one, extended to 1.00.<br>Fitted as a straight line on log "
+                             "score. The band is one standard error on that line, and these models "
+                             "were picked to fill a table, not sampled over time"},
 }
 
 
 def _timeline_alts(table: list[dict]) -> dict:
-    """The published fit is a straight line through the running best. This is what the other two
-    choices would say: every model rather than the running best, and log of the gap to 1.00 rather
-    than score. Measured rather than described, so the page's caveats cannot go stale.
+    """The published fit is an exponential through the frontier. This is what the other two choices
+    would say: every model rather than the frontier, and a straight line in score rather than in
+    log score. Measured rather than described, so the page's caveats cannot go stale.
     """
     front = _running_best(table)
     every = [(date.fromisoformat(RELEASED[name]).toordinal(), row["score"])
@@ -2334,11 +2362,11 @@ def _timeline_alts(table: list[dict]) -> dict:
     return {"n_models": len(every), "all_per_year": all_lin["slope"] * 365.25,
             "all_sd": all_lin["sd"], "all_r": all_lin["r"],
             "all_reach": date.fromordinal(int(all_reach)) if all_reach else None,
-            # A log fit on the gap never crosses 1.00, so it has a halving time instead of a date.
-            "half_front": _halving_months(_fit([p[0] for p in front], [p[1] for p in front],
-                                               log=True)),
-            "half_all": _halving_months(_fit([p[0] for p in every], [p[1] for p in every],
-                                             log=True)),
+            # The doubling time the published fit implies, and the one every model implies.
+            "half_front": _doubling_months(_fit([p[0] for p in front], [p[1] for p in front],
+                                                log=True)),
+            "half_all": _doubling_months(_fit([p[0] for p in every], [p[1] for p in every],
+                                              log=True)),
             "first": front[0][2], "first_score": front[0][1],
             "first_when": date.fromordinal(front[0][0]),
             "cheap": sum(1 for _, score, _ in front if score < 0.60)}
@@ -2363,10 +2391,11 @@ def _versus(table: list[dict], kind: str, suffix: str = "") -> tuple[Path, dict]
                            if dated else known[r["model"].split(" (")[0]])}
                for r in table
                if r["score"] is not None and r["model"].split(" (")[0] in known]
-    # The date chart fits the running best, which wassname asked for. Every model is still drawn,
-    # and only the frontier is fitted. A straight line, so it reaches 1.00 on a date.
+    # The date chart fits the frontier, which wassname asked for: only the models that beat every
+    # earlier one. Every model is still drawn, and only that subset is fitted. The fit is on log
+    # score, so the line is an exponential and still reaches 1.00 on a date.
     front = _running_best(table) if dated else []
-    fit = (_fit([p[0] for p in front], [p[1] for p in front]) if dated
+    fit = (_fit([p[0] for p in front], [p[1] for p in front], log=True) if dated
            else _fit([r["x"] for r in plotted], [r["score"] for r in plotted]))
     fit["models"] = [p[2] for p in front] if dated else [r["model"] for r in plotted]
     # Where the line reaches 1.00. Only on the date axis: an index point is not a thing to wait for,
@@ -2421,7 +2450,7 @@ def _versus(table: list[dict], kind: str, suffix: str = "") -> tuple[Path, dict]
             + (f"<br>released {known[r['model'].split(' (')[0]]}" if dated else "")
             + f"<br>{r['score'] - at:+.3f} from the line"
             # In score units for every point drawn, which on the date chart is more points than the
-            # fit used: `fit["resid"]` there is the frontier's own, and in log units.
+            # fit used: `fit["resid"]` there covers the fitted months only.
             for r, at in zip(plotted, _curve(fit, [r["x"] for r in plotted])[0])],
         hovertemplate="%{hovertext}<extra></extra>")
     fig.add_hline(y=1.0, line={"dash": "dash", "width": 1, "color": "#9ca3af"},
@@ -2446,14 +2475,14 @@ def _versus(table: list[dict], kind: str, suffix: str = "") -> tuple[Path, dict]
             # The date chart carries a fourth header line, naming the construction, so its header is
             # taller. A short header pushed that line into the plot.
             "margin": {"l": 80, "r": 150, "t": 190 if dated else 160, "b": 70}}
-    # Which construction this is, in the header rather than inside the axes: the running best is the
+    # Which construction this is, in the header rather than inside the axes: a date fit is the
     # usual shape for a date chart, so a reader who knows METR's would assume this is one, and the
     # label placer does not know about annotations, so anything in the plot lands on a model name.
     subtitle = axis["subtitle"]
     if dated:
         alt = _timeline_alts(table)
-        subtitle += (f"<br>Fitted on its {fit['n']} running-best models, of "
-                     f"{alt['n_models']} drawn")
+        subtitle += (f"<br>Fitted on the {fit['n']} frontier models, of {alt['n_models']} drawn. "
+                     f"The score doubles every {alt['half_front']:.0f} months")
     fig.update_layout(
         title=f'{axis["title"]}<br><sub>{subtitle}<br>{len(load_items())} problems from the '
               'research of <a href="https://wassname.org">wassname</a></sub>',
@@ -2470,10 +2499,11 @@ def _versus(table: list[dict], kind: str, suffix: str = "") -> tuple[Path, dict]
         fig.add_annotation(**{**label, "x": out([label["x"]])[0]})
     fig.add_annotation(
         text=(f"fit: {fit['r']:+.2f} correlation, "
-              + (f"{fit['slope'] * 365.25:+.2f} score a year" if dated
+              + (f"doubling every {_doubling_months(fit):.0f} months" if dated
                  else f"{fit['slope']:+.4f} score a {axis['x_unit']}")
-              + f"<br>scatter about the line {fit['sd']:.3f}, over "
-              + (f"the {fit['n']} models on the frontier" if dated else f"{fit['n']} models")),
+              + f"<br>scatter about the line {fit['sd']:.3f}"
+              + (f" in log score, over the {fit['n']} frontier models" if dated
+                 else f", over {fit['n']} models")),
         # Bottom right, the one corner both charts leave empty: a weak model with a high public
         # index, or a weak model released last month. Top left is the 1.00 line's own label.
         xref="paper", yref="paper", x=0.99, y=0.08, xanchor="right", yanchor="bottom",
@@ -2748,8 +2778,12 @@ def _provider_prefs(model: str) -> dict:
     # Every endpoint reports `unknown`, which is every closed model. There is nothing to choose
     # between, so the vendor leads and the rest of its own clouds stay reachable.
     if not good:
+        # One endpoint means there is nothing to choose between, so the gate only rejects the whole
+        # model. o1 is served by OpenAI alone and 404s under it, because OpenRouter does not list
+        # max_completion_tokens as an o1 parameter.
         return {"provider": {"order": list(dict.fromkeys(first_party + PREFERRED_HOSTS)),
-                             "allow_fallbacks": True, "require_parameters": True}}
+                             "allow_fallbacks": True,
+                             "require_parameters": len(endpoints) > 1}}
     return {"provider": {"order": order, "allow_fallbacks": False, "require_parameters": True}}
 
 
@@ -3133,7 +3167,11 @@ if __name__ == "__main__":
     parser.add_argument("--judge-passes", type=int, default=JUDGE_PASSES)
     parser.add_argument("--judge-temperature", type=float, default=JUDGE_TEMPERATURE)
     parser.add_argument("--judge-max-tokens", type=int, default=JUDGE_MAX_TOKENS)
-    parser.add_argument("--reasoning", default="off", help="off, or an OpenRouter effort level")
+    parser.add_argument("--reasoning", default="off",
+                        help="off, none (send no effort at all), or an OpenRouter effort level")
+    parser.add_argument("--max-tokens", type=int, default=ANSWER_MAX_TOKENS,
+                        help="answer budget. Only to sit under a model's own ceiling, like gpt-4's "
+                             "4096: lowering it for a model that would use more changes its score")
     parser.add_argument("--log-dir", default="logs")
     parser.add_argument("--dry-run", action="store_true", help="print the call count, spend nothing")
     parser.add_argument("--smoke", action="store_true", help="offline self-test, no API key")
@@ -3208,7 +3246,10 @@ if __name__ == "__main__":
         print(f"{n} items x {args.draws} draws x (1 answer + {args.judge_passes} judge calls) = "
               f"{n * args.draws * (1 + args.judge_passes)} calls, minus whatever the cache holds")
         if not args.dry_run:
-            reasoning = REASONING if args.reasoning == "off" else {"reasoning": {"effort": args.reasoning}}
+            # "none" sends no reasoning key at all, for a model that has no such setting: with
+            # require_parameters on, asking gpt-4 for an effort matches no endpoint and 404s.
+            reasoning = ({} if args.reasoning == "none" else REASONING if args.reasoning == "off"
+                         else {"reasoning": {"effort": args.reasoning}})
             # Every candidate in one process, all in flight together. inspect keys its connection
             # semaphore on (provider, key, model), so each candidate provider sees its own 8 and
             # the five judges see one pool each however many candidates are running. One model at
@@ -3228,7 +3269,8 @@ if __name__ == "__main__":
                     logs = inspect_eval(
                         wassname_ml_bench(args.items, args.judge_model, args.judge_passes,
                                           args.judge_temperature, reasoning, args.judge_max_tokens,
-                                          skill=args.skill, draw=draw, provider=json.loads(prefs)),
+                                          skill=args.skill, draw=draw, provider=json.loads(prefs),
+                                          max_tokens=args.max_tokens),
                         model=batch,
                         log_dir=args.log_dir,
                         log_model_api=True,
