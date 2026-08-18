@@ -150,7 +150,7 @@ const AXES = {
                 fmt: v => { const d = asDate(v);
                             return MONTHS[d.getUTCMonth()] + " " + d.getUTCFullYear(); },
                 fit: "released", x: r => r.released && ord(r.released),
-                note: "an exponential through the frontier, extended, and these models were picked "
+                note: "an exponential through the frontier flagships, extended, and these were picked "
                       + "to fill a table" },
 };
 
@@ -213,9 +213,12 @@ function place(cx, cy, w, h, taken) {
 // `sd`, `n`, `mean` and `sxx`, and the date axis needs where the line reaches 1.00. Null under 3
 // points, since 2 points fit exactly and would draw a band of zero width.
 function refit(rows, ax) {
-  // The date axis fits the frontier, the models that beat every earlier one, not every model, the
-  // same models bench.py fits into timeline.png. On log score, so the line is an exponential.
-  if (ax.best) rows = frontier(rows, ax.x);
+  // The date axis fits wassname's frontier models, not every model. The list is bench.py's, read
+  // from the stored fit, so there is one list and not two. On log score, so it is an exponential.
+  if (ax.best) {
+    const front = new Set(data.fits[ax.fit].models);
+    rows = rows.filter(r => front.has(r.model));
+  }
   if (rows.length < 3) return null;
   const log = !!ax.best;
   const xs = rows.map(r => ax.x(r)), ys = rows.map(r => log ? Math.log10(r.score) : r.score);
@@ -422,7 +425,7 @@ function draw(data, x, labs, svg) {
     Object.assign(el("text", { class: "err-text", x: W - PAD.r - 4, y: H - PAD.b - 26,
                                "text-anchor": "end" }, svg),
                   { textContent: `r ${fit.r.toFixed(2)}, ` +
-                                 (ax.best ? `${fit.n} models on the frontier`
+                                 (ax.best ? `${fit.n} frontier flagships`
                                           : `${fit.n} models`) +
                                  `, models scatter ±${fit.sd.toFixed(3)} about the line` +
                                  (fit.log ? " in log score" : "") });

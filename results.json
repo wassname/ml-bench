@@ -1171,50 +1171,38 @@
    "reach_month": null
   },
   "released": {
-   "slope": 0.0005266250617712782,
-   "intercept": -389.769036074957,
+   "slope": 0.0005672038791216573,
+   "intercept": -419.7151258809136,
    "log": true,
-   "sd": 0.08516559939677495,
-   "r": 0.9252409359418623,
-   "n": 10,
-   "mean": 739524.3,
-   "sxx": 1244446.1,
+   "sd": 0.04558355962358764,
+   "r": 0.9929949039500288,
+   "n": 4,
+   "mean": 739330.75,
+   "sxx": 912308.75,
    "resid": [
-    0.049217022126526566,
-    -0.0006503576425914703,
-    -0.08167688448866006,
-    -0.07481239252734828,
-    -0.09883530122815404,
-    -0.0936197134976186,
-    0.04024515711066676,
-    0.0682449335673718,
-    0.10349904119773351,
-    0.08838849538161565
+    0.02407638481457719,
+    -0.05143680751995572,
+    -0.0029932402546242465,
+    0.030353662960306116
    ],
    "models": [
     "gpt-4",
     "o1",
-    "gpt-oss-120b",
-    "claude-haiku-4.5",
-    "qwen3.5-27b",
-    "gemma-4-31b-it",
-    "glm-5.1",
     "gpt-5.5",
-    "claude-fable-5",
-    "claude-opus-5"
+    "claude-fable-5"
    ],
-   "reach": "2027-05-25",
+   "reach": "2026-12-22",
    "worst": {
-    "model": "qwen3.5-27b",
-    "resid": -0.09883530122815404
+    "model": "o1",
+    "resid": -0.05143680751995572
    },
    "best": {
     "model": "claude-fable-5",
-    "resid": 0.10349904119773351
+    "resid": 0.030353662960306116
    },
    "per_year": null,
-   "half": 18.78015925349842,
-   "reach_month": "May 2027"
+   "half": 17.43659183407446,
+   "reach_month": "December 2026"
   }
  },
  "items": {
@@ -1371,20 +1359,14 @@
   {
    "model": "claude-fable-5",
    "question": "OL#6",
-   "draw": 3,
-   "why": "refused 3/3 attempts. no refusal text, native_finish_reason=max_tokens"
-  },
-  {
-   "model": "claude-fable-5",
-   "question": "OL#6",
    "draw": 1,
    "why": "refused 3/3 attempts. no refusal text, native_finish_reason=max_tokens"
   },
   {
    "model": "claude-fable-5",
-   "question": "SV#8",
+   "question": "OL#6",
    "draw": 3,
-   "why": "refused 3/3 attempts. refusal: This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback."
+   "why": "refused 3/3 attempts. no refusal text, native_finish_reason=max_tokens"
   },
   {
    "model": "claude-fable-5",
@@ -1396,6 +1378,12 @@
    "model": "claude-fable-5",
    "question": "SV#8",
    "draw": 1,
+   "why": "refused 3/3 attempts. refusal: This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback."
+  },
+  {
+   "model": "claude-fable-5",
+   "question": "SV#8",
+   "draw": 3,
    "why": "refused 3/3 attempts. refusal: This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback."
   },
   {

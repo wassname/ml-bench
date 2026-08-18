@@ -2105,22 +2105,18 @@ def _doubling_months(fit: dict) -> float:
     return 12 * math.log10(2) / (fit["slope"] * 365.25)
 
 
-def _running_best(table: list[dict]) -> list[tuple[int, float, str]]:
-    """The frontier: a model is kept only if it beats every model released before it.
+# The models this chart fits, chosen by wassname. A running best computed from the table is not
+# the same thing: a weak model released in a quiet month sets a record here and joins the fit, which
+# put gemma-4-31b-it and glm-5.1 on the frontier and pulled the line off the flagships.
+FRONTIER = ["gpt-4", "o1", "gpt-5.5", "claude-fable-5"]
 
-    This is what the chart fits, at wassname's asking. Each point is a record, so the line reads as
-    the best available on a date rather than the average of what happened to be tested.
-    """
-    pts = sorted((date.fromisoformat(RELEASED[name]).toordinal(), row["score"], name)
-                 for row in table
-                 for name in [row["model"].split(" (")[0]]
-                 if row["score"] is not None and name in RELEASED)
-    front, best = [], -math.inf
-    for day, score, name in pts:
-        if score > best:
-            best = score
-            front.append((day, score, name))
-    return front
+
+def _running_best(table: list[dict]) -> list[tuple[int, float, str]]:
+    """wassname's frontier models, in release order, dropping any that has no score yet."""
+    return sorted((date.fromisoformat(RELEASED[name]).toordinal(), row["score"], name)
+                  for row in table
+                  for name in [row["model"].split(" (")[0]]
+                  if row["score"] is not None and name in FRONTIER)
 
 
 def _frontier(table: list[dict], x: str) -> set[str]:
@@ -2340,8 +2336,8 @@ _VS_AXES = {
                  "title": "How long until a model reaches wassname's own answer?",
                  # The caveat rides the chart, not only the page: a png gets screenshotted alone,
                  # and this one names a year, which reads as a forecast unless the chart says no.
-                 "subtitle": "An exponential through the frontier, the models that beat every "
-                             "earlier one, extended to 1.00.<br>Fitted as a straight line on log "
+                 "subtitle": "An exponential through the frontier flagships, extended to 1.00."
+                             "<br>Fitted as a straight line on log "
                              "score. The band is one standard error on that line, and these models "
                              "were picked to fill a table, not sampled over time"},
 }
