@@ -2454,18 +2454,6 @@ def _versus(table: list[dict], kind: str, suffix: str = "") -> tuple[Path, dict]
                                    else "1.00 = wassname's own answer"),
                   annotation_position="top left",
                   annotation_font={"size": 10, "color": "#6b7280"})
-    # wassname's own ask: his son on the same axes, 0 in 2024 and 0.05 a year, so the chart shows the
-    # models climbing faster than the child, and his own line not moving at all.
-    if dated:
-        son_x = np.array(span)
-        son_y = 0.05 * (son_x - date(2024, 1, 1).toordinal()) / 365.25
-        fig.add_scatter(x=out(son_x), y=list(son_y), mode="lines", showlegend=False,
-                        line={"color": "#c2410c", "width": 2, "dash": "dash"},
-                        hovertext="wassname's son", hovertemplate="%{hovertext}<extra></extra>")
-        fig.add_annotation(x=out([son_x[1]])[0], y=float(son_y[1]), showarrow=False,
-                           text="wassname's son, 0 in 2024 and 0.05 a year",
-                           xanchor="right", yanchor="bottom",
-                           font={"size": 11, "color": "#c2410c"})
     # A taller header than the pareto chart, because the caveat has to fit on the chart itself.
     size = {"fig_w": 1100, "fig_h": 660,
             # The date chart carries a fourth header line, naming the construction, so its header is

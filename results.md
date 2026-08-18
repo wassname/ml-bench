@@ -81,3 +81,21 @@ When will a model be as good as me (wassname)? <!-- -- wassname -->
 claude-fable-5 refuses questions its provider blocks, 2 of 12 in at least one draw. 1 stayed blocked in every draw (SV#8). Those cells take claude-opus-5's score, shown in italic. The row then measures a pair of models, and $/run counts only its own tokens.
 
 What the `+-` bar is made of, measured on qwen3.8-max over 3 answers to each question, in row units and added in quadrature: between questions 0.063, between answers 0.022, between judges 0.015. They come to 0.068, against 0.075 on a single answer, and that row's own `+-` of 0.071, which is the spread of its 12 cells, is the other way of measuring the same bar. Only the middle part shrinks with more answers; the first needs more questions.
+
+### The judges
+
+We use multiple judges. To avoid bias each judge is read through its own two anchors, so a point
+means the same on every judge. To avoid self bias we remove all judgement of models from the same
+company, including their own. This is fine because the calibration and the number of judges keep the
+mean score about the same. <!-- -- wassname -->
+
+Below we show how each judge grades an off topic answer (should be zero) and an ideal answer (should
+be one).
+
+| judge                           |   judgments |   off-topic |   gold |    gap |   leniency |
+|:--------------------------------|------------:|------------:|-------:|-------:|-----------:|
+| openai/gpt-oss-120b             |         917 |      -0.016 | +0.996 | +1.012 |     +0.074 |
+| qwen/qwen3.7-flash              |         929 |      -0.004 | +0.992 | +0.996 |     -0.004 |
+| google/gemma-4-31b-it           |         989 |      +0.010 | +0.990 | +0.980 |     -0.006 |
+| thinkingmachines/inkling-small  |        1025 |      -0.020 | +0.988 | +1.008 |     -0.011 |
+| deepseek/deepseek-v4-flash-0731 |         942 |      -0.008 | +0.997 | +1.005 |     -0.053 |

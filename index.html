@@ -49,7 +49,6 @@
   /* The fitted line and the uncertainty in where that line sits. Grey, not a series colour: it is
      the same ink as the reference line, because both are annotation rather than data. */
   .fitline { fill: none; stroke: #4b5563; stroke-width: 2; }
-  .son { fill: none; stroke: #c2410c; stroke-width: 2; stroke-dasharray: 6 3; }
   .band { fill: #4b5563; opacity: .10; stroke: none; }
   .ref { stroke: var(--grey); stroke-width: 1; stroke-dasharray: 5 4; }
   .ref-text { font-size: 11px; fill: #6b7280; }
@@ -143,8 +142,8 @@ const AXES = {
            scale: "linear",
            fmt: v => String(Math.round(v)) + "%", fit: "hle", x: r => r.hle,
            note: "a second public test, and a STEM exam rather than an index of many" },
-  // `humans` puts wassname and his son on the chart, which is what this view is for. It needs a
-  // floor of 0 rather than one that follows the models, since a toddler scores near it.
+  // `humans` draws wassname's own 1.00 line and holds the floor at 0, so the axis does not
+  // rescale to the models.
   // `best` fits wassname's frontier flagships rather than every model. No note: the fit caption
   // bottom right already names the models and the shape.
   "released": { title: "release date", scale: "date", humans: true, best: true,
@@ -330,17 +329,6 @@ function draw(data, x, labs, svg) {
   Object.assign(el("text", { class: "ref-text", x: PAD.l + 4, y: py(1) - 5 }, svg),
                 { textContent: ax.humans ? "wassname, flat: 1.00 is his own answer"
                                          : "1.00 = wassname's own answer" });
-
-  // wassname's own ask: his son on the same axes as the models, 0 in 2024 and 0.05 a year, to make
-  // the point that the models climb faster than the child does and that his own line does not move.
-  if (ax.humans) {
-    const son = q => 0.05 * (q - ord("2024-01-01")) / 365.25;
-    el("polyline", { class: "son", points: [x0, x1].map(q => `${px(q)},${clip(son(q))}`).join(" ") },
-       svg);
-    Object.assign(el("text", { class: "ref-text", x: W - PAD.r - 4, y: py(son(x1)) - 8,
-                               "text-anchor": "end" }, svg),
-                  { textContent: "wassname's son, 0 in 2024 and 0.05 a year" });
-  }
 
   // Which corner is good, said once, so nobody has to work it out from two axis titles. A badge
   // rather than an arrow: an arrow into the corner crosses the reference line's own label.

@@ -1371,6 +1371,12 @@
   {
    "model": "claude-fable-5",
    "question": "SV#8",
+   "draw": 2,
+   "why": "refused 3/3 attempts. no refusal text, native_finish_reason=max_tokens"
+  },
+  {
+   "model": "claude-fable-5",
+   "question": "SV#8",
    "draw": 3,
    "why": "refused 3/3 attempts. refusal: This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback."
   },
@@ -1379,12 +1385,6 @@
    "question": "SV#8",
    "draw": 1,
    "why": "refused 3/3 attempts. refusal: This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback."
-  },
-  {
-   "model": "claude-fable-5",
-   "question": "SV#8",
-   "draw": 2,
-   "why": "refused 3/3 attempts. no refusal text, native_finish_reason=max_tokens"
   },
   {
    "model": "mimo-v2.5-pro",
