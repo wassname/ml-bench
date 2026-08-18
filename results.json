@@ -444,7 +444,7 @@
    "+-": 0.065,
    "answered": "12/12",
    "answers/q": 3,
-   "$/run": 0.6303514800000001,
+   "$/run": 0.31517574000000004,
    "ktok": 156.949,
    "pts/Mtok": 3.9990110308785347,
    "reasoning share": 0.9002988231846014,
@@ -1359,32 +1359,32 @@
   {
    "model": "claude-fable-5",
    "question": "OL#6",
-   "draw": 1,
+   "draw": 3,
    "why": "refused 3/3 attempts. no refusal text, native_finish_reason=max_tokens"
   },
   {
    "model": "claude-fable-5",
    "question": "OL#6",
-   "draw": 3,
+   "draw": 1,
    "why": "refused 3/3 attempts. no refusal text, native_finish_reason=max_tokens"
+  },
+  {
+   "model": "claude-fable-5",
+   "question": "SV#8",
+   "draw": 3,
+   "why": "refused 3/3 attempts. refusal: This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback."
+  },
+  {
+   "model": "claude-fable-5",
+   "question": "SV#8",
+   "draw": 1,
+   "why": "refused 3/3 attempts. refusal: This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback."
   },
   {
    "model": "claude-fable-5",
    "question": "SV#8",
    "draw": 2,
    "why": "refused 3/3 attempts. no refusal text, native_finish_reason=max_tokens"
-  },
-  {
-   "model": "claude-fable-5",
-   "question": "SV#8",
-   "draw": 1,
-   "why": "refused 3/3 attempts. refusal: This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback."
-  },
-  {
-   "model": "claude-fable-5",
-   "question": "SV#8",
-   "draw": 3,
-   "why": "refused 3/3 attempts. refusal: This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback."
   },
   {
    "model": "mimo-v2.5-pro",

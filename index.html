@@ -353,7 +353,7 @@ function draw(data, x, labs, svg) {
        svg);
     Object.assign(el("text", { class: "corner", x: PAD.l + 10, y: PAD.t + 16 }, svg),
                   { textContent: ax.corner });
-  } else {
+  } else if (ax.note) {
     Object.assign(el("text", { class: "corner", x: PAD.l + 10, y: PAD.t + 16 }, svg),
                   { textContent: ax.note });
   }
