@@ -145,13 +145,12 @@ const AXES = {
            note: "a second public test, and a STEM exam rather than an index of many" },
   // `humans` puts wassname and his son on the chart, which is what this view is for. It needs a
   // floor of 0 rather than one that follows the models, since a toddler scores near it.
-  // `best` fits the running best rather than every model, which is what a date chart usually shows.
+  // `best` fits wassname's frontier flagships rather than every model. No note: the fit caption
+  // bottom right already names the models and the shape.
   "released": { title: "release date", scale: "date", humans: true, best: true,
                 fmt: v => { const d = asDate(v);
                             return MONTHS[d.getUTCMonth()] + " " + d.getUTCFullYear(); },
-                fit: "released", x: r => r.released && ord(r.released),
-                note: "an exponential through the frontier flagships, extended, and these were picked "
-                      + "to fill a table" },
+                fit: "released", x: r => r.released && ord(r.released) },
 };
 
 // A log axis is drawn in log units, the other two in their own units, so the position rule and the
@@ -212,12 +211,15 @@ function place(cx, cy, w, h, taken) {
 // Least squares over the points on the chart, in the same form bench.py stores: the band needs
 // `sd`, `n`, `mean` and `sxx`, and the date axis needs where the line reaches 1.00. Null under 3
 // points, since 2 points fit exactly and would draw a band of zero width.
-function refit(rows, ax) {
-  // The date axis fits wassname's frontier models, not every model. The list is bench.py's, read
-  // from the stored fit, so there is one list and not two. On log score, so it is an exponential.
+function refit(rows, ax, models) {
+  // The date axis fits wassname's frontier models, not every model. `models` is bench.py's own
+  // list, from the stored fit, so there is one list and not two. On log score, so it is an
+  // exponential.
   if (ax.best) {
-    const front = new Set(data.fits[ax.fit].models);
-    rows = rows.filter(r => front.has(r.model));
+    // On the base name: a row that borrowed a sibling's score reads "claude-fable-5 (with
+    // fallback)" here and "claude-fable-5" in the stored fit, so an exact match dropped it.
+    const front = new Set(models);
+    rows = rows.filter(r => front.has(r.model.split(" (")[0]));
   }
   if (rows.length < 3) return null;
   const log = !!ax.best;
@@ -270,7 +272,8 @@ function draw(data, x, labs, svg) {
   // The stored fit covers every model. The reader can switch labs off, so the line is re-fitted
   // over what is on the chart, and falls back to the stored one when too few points are left for
   // the band to mean anything.
-  const shownFit = ax.fit && refit(rows.filter(r => labs.has(r.company)), ax);
+  const shownFit = ax.fit && refit(rows.filter(r => labs.has(r.company)), ax,
+                                   data.fits[ax.fit].models);
   const fit = shownFit || (ax.fit && data.fits[ax.fit]);
   const shown = rows.filter(r => labs.has(r.company));
   // Bounds come from every point, so filtering a lab moves nothing under it.
