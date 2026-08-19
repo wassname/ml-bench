@@ -299,7 +299,7 @@
    "+-": 0.067,
    "answered": "12/12",
    "answers/q": 3,
-   "$/run": 0.59602612,
+   "$/run": 0.483832968,
    "ktok": 157.033,
    "pts/Mtok": 4.220798763433484,
    "reasoning share": 0.9280788114600116,
@@ -377,6 +377,35 @@
    "TS#10": 0.7556245677023516,
    "VG#11": 0.8281487839856195,
    "VJ#12": 0.7703592769541161
+  },
+  {
+   "model": "glm-5.3",
+   "company": "Zhipu",
+   "fallback": null,
+   "score": 0.6510483278630568,
+   "+-": 0.072,
+   "answered": "12/12",
+   "answers/q": 3,
+   "$/run": 0.1047348,
+   "ktok": 23.202,
+   "pts/Mtok": 28.0600089588422,
+   "reasoning share": 0.4023360055167658,
+   "full": "z-ai/glm-5.3",
+   "index": null,
+   "hle": null,
+   "released": "2026-08-18",
+   "AP#1": 0.5898493181944533,
+   "CW#2": 0.2694181318128394,
+   "KL#3": 0.5764227938255907,
+   "MC#4": 0.19476389221344254,
+   "NP#5": 0.9549780436500437,
+   "OL#6": 1.0546653671853319,
+   "PC#7": 0.6263389080328299,
+   "SV#8": 0.7116859574490529,
+   "TR#9": 0.7466472841950763,
+   "TS#10": 0.7236615964035114,
+   "VG#11": 0.5189994910142576,
+   "VJ#12": 0.8451491503802515
   },
   {
    "model": "qwen3.8-max",
@@ -647,7 +676,7 @@
    "+-": 0.075,
    "answered": "12/12",
    "answers/q": 1,
-   "$/run": 0.244293598,
+   "$/run": 0.2040266,
    "ktok": 100.876,
    "pts/Mtok": 5.175680722013804,
    "reasoning share": 0.8139002339505929,
@@ -734,7 +763,7 @@
    "+-": 0.073,
    "answered": "12/12",
    "answers/q": 3,
-   "$/run": 0.016381979999999997,
+   "$/run": 0.016302749999999998,
    "ktok": 45.852,
    "pts/Mtok": 10.586615024326862,
    "reasoning share": 0.6388380005234232,
@@ -1284,40 +1313,40 @@
     "gold": 0.997,
     "gap": 1.005,
     "leniency": -0.053,
-    "judgments": 942
+    "judgments": 977
    },
    "google/gemma-4-31b-it": {
     "off_topic": 0.0103,
     "gold": 0.9901,
     "gap": 0.98,
-    "leniency": -0.006,
-    "judgments": 989
+    "leniency": -0.005,
+    "judgments": 1025
    },
    "openai/gpt-oss-120b": {
     "off_topic": -0.0158,
     "gold": 0.9962,
     "gap": 1.012,
-    "leniency": 0.074,
-    "judgments": 917
+    "leniency": 0.075,
+    "judgments": 953
    },
    "qwen/qwen3.7-flash": {
     "off_topic": -0.0037,
     "gold": 0.9923,
     "gap": 0.996,
     "leniency": -0.004,
-    "judgments": 929
+    "judgments": 965
    },
    "thinkingmachines/inkling-small": {
     "off_topic": -0.02,
     "gold": 0.9877,
     "gap": 1.008,
-    "leniency": -0.011,
-    "judgments": 1025
+    "leniency": -0.012,
+    "judgments": 1061
    }
   },
   "disagreement": {
    "sd": 0.173,
-   "judgments_per_row": 133,
+   "judgments_per_row": 135,
    "se": 0.015
   },
   "dropout": {
@@ -1359,32 +1388,32 @@
   {
    "model": "claude-fable-5",
    "question": "OL#6",
-   "draw": 3,
+   "draw": 1,
    "why": "refused 3/3 attempts. no refusal text, native_finish_reason=max_tokens"
   },
   {
    "model": "claude-fable-5",
    "question": "OL#6",
-   "draw": 1,
+   "draw": 3,
    "why": "refused 3/3 attempts. no refusal text, native_finish_reason=max_tokens"
+  },
+  {
+   "model": "claude-fable-5",
+   "question": "SV#8",
+   "draw": 1,
+   "why": "refused 3/3 attempts. refusal: This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback."
+  },
+  {
+   "model": "claude-fable-5",
+   "question": "SV#8",
+   "draw": 3,
+   "why": "refused 3/3 attempts. refusal: This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback."
   },
   {
    "model": "claude-fable-5",
    "question": "SV#8",
    "draw": 2,
    "why": "refused 3/3 attempts. no refusal text, native_finish_reason=max_tokens"
-  },
-  {
-   "model": "claude-fable-5",
-   "question": "SV#8",
-   "draw": 3,
-   "why": "refused 3/3 attempts. refusal: This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback."
-  },
-  {
-   "model": "claude-fable-5",
-   "question": "SV#8",
-   "draw": 1,
-   "why": "refused 3/3 attempts. refusal: This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback."
   },
   {
    "model": "mimo-v2.5-pro",

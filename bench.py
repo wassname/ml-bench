@@ -185,7 +185,7 @@ MODELS = {
         "openrouter/xiaomi/mimo-v2.5-pro",
         "openrouter/deepseek/deepseek-v4-pro-0813",
         "openrouter/z-ai/glm-5.2",
-        # "openrouter/z-ai/glm-5.3",  # not on OpenRouter yet, uncomment next run
+        "openrouter/z-ai/glm-5.3",
         "openrouter/meta/muse-spark-1.2",
         "openrouter/google/gemini-3.6-flash",
         "openrouter/google/gemini-3.7-flash",
@@ -2042,6 +2042,8 @@ RELEASED = {
     "deepseek-v4-flash-0731": "2026-07-31", "qwen3.8-max": "2026-08-03",
     "muse-spark-1.2": "2026-08-05", "grok-4.6": "2026-08-12", "gemini-3.7-flash": "2026-08-13",
     "deepseek-v4-pro-0813": "2026-08-13", "qwen3.8-27b": "2026-08-14",
+    # OpenRouter's own created field, 1787086655.
+    "glm-5.3": "2026-08-18",
     "qwen3.5-27b": "2026-02-24", "glm-5.1": "2026-04-07", "qwen3.6-27b": "2026-04-22",
     "gpt-5.5": "2026-04-23", "claude-opus-4.8": "2026-05-28", "grok-4.5": "2026-07-08",
     # OpenAI's own announcement days, not AA, which lists neither.
