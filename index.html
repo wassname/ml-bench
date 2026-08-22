@@ -100,7 +100,7 @@
   <div id="labs" class="chips">labs</div>
   <label>score against <select id="axis">
     <option value="$/run">dollars per run</option>
-    <option value="ktok">thousands of tokens</option>
+    <option value="tok/answer">tokens per answer</option>
     <option value="index">public intelligence index</option>
     <option value="hle">Humanity's Last Exam</option>
     <option value="released">release date</option>
@@ -133,8 +133,8 @@ const AXES = {
   // `nItems` is filled from results.json once it lands, so this label cannot disagree with the bench.
   "$/run": { title: () => `$ per run, all ${nItems} items`, fmt: v => "$" + fmt(v), scale: "log",
              corner: "powerful and cheap", x: r => r["$/run"] },
-  "ktok": { title: "thousands of tokens per run, reasoning included", fmt: fmt, scale: "log",
-            corner: "powerful and terse", x: r => r.ktok },
+  "tok/answer": { title: "tokens per answer, reasoning included", fmt: fmt, scale: "log",
+            corner: "powerful and terse", x: r => r["tok/answer"] },
   "index": { title: "Artificial Analysis intelligence index, public tests", scale: "linear",
              fmt: v => String(Math.round(v)), fit: "index", x: r => r.index,
              note: "a model below the line does worse here than its public score predicts" },
@@ -470,7 +470,7 @@ function draw(data, x, labs, svg) {
         (fit ? `<br>${ax.fmt(ax.x(r))}<br>` +
                `${(r.score - curve(fit, ax.x(r))[0]).toFixed(3)} against the line`
              : `<br>$${fmt(r["$/run"])} per run<br>` +
-               `${r.ktok ? r.ktok + "k tokens" : "tokens unknown"}`);
+               `${r["tok/answer"] ? fmt(r["tok/answer"]) + " tokens per answer" : "tokens unknown"}`);
       tip.style.opacity = 1;
       tip.style.left = (e.clientX + 14) + "px";
       tip.style.top = (e.clientY + 14) + "px";
@@ -482,7 +482,7 @@ function draw(data, x, labs, svg) {
 // Each png in results.md has a live twin on this axis, so the page swaps it for an svg and the png
 // stays the fallback: on GitHub, in a screenshot, and until this data arrives.
 const PNG_AXIS = { "sandbagging.png": "index", "hle.png": "hle", "timeline.png": "released",
-                   "pareto.png": "$/run", "pareto_tokens.png": "ktok" };
+                   "pareto.png": "$/run", "pareto_tokens.png": "tok/answer" };
 // {svg, axis} per section chart, filled once results.md is rendered. `redrawAll` is replaced by the
 // real one below, so whichever fetch lands second draws everything.
 const SECTIONS = [];
