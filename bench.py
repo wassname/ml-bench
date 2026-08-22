@@ -56,7 +56,11 @@ ITEMS = Path(__file__).parent / "items"
 # v96, not v95: v95 exists in the logs from a question set that was rolled back, and reusing the
 # name would let those answers into this table. The questions are unchanged from v94; what changed
 # is who serves the answer, which changes the answer, so the two must not share a table. -- CLAUDE
-RUBRIC_VERSION = "v96"
+# v97: the questions are unchanged, but every answer is drawn differently. Two changes, both in
+# the request. The effort arm is each model's lowest listed rung instead of a global "minimal" that
+# 28 of the 32 models do not have and silently replaced with their own default. And the answer
+# budget is 4000 tokens with a continuation turn, equal for every model, instead of 40,000.
+RUBRIC_VERSION = "v97"
 # Stamped on every chart, so an image that travels without the page keeps its source.
 SITE_URL = "wassname.github.io/ml-bench"
 # A panel, one company each, because judge choice moves a score more than sampling does. Measured
@@ -119,8 +123,40 @@ JUDGE_ANCHORS: dict[str, tuple[float, float]] = {
 BEYOND_ID = "beyond_reference"
 BEYOND_WEIGHT = 0.5
 JUDGE_TEMPERATURE = 0.7
-ANSWER_MAX_TOKENS = 40_000
-REASONING = {"reasoning": {"effort": "minimal"}}
+# A thinking budget, equal for every model, so the table is not partly measuring how long each lab
+# lets its model think. Measured 2026-08-22 over 572 logged answers: prose is near constant across
+# models (median 997 tokens) and the 30x spread in output is all thinking, so this bounds thinking
+# and `FINAL_ANSWER_MAX_TOKENS` leaves the answer its own room
+# (scripts/scratch/answer_vs_thinking.py). Nothing is forced to spend it.
+ANSWER_MAX_TOKENS = 4_000
+# The continuation turn writes prose, not thinking, so it needs room for the longest answer the
+# bench has seen. Measured over 572 logged answers: prose alone is median 997 tokens, p99 4436,
+# max 5795 (scripts/scratch/answer_vs_thinking.py). A cap under that would truncate the answer
+# turn itself and score the model 0 for the harness's reason, not its own.
+FINAL_ANSWER_MAX_TOKENS = 6000
+# Models whose OpenRouter record does not describe what their provider accepts, so the rung is
+# measured instead of read. Applies to both turns.
+#
+# o1: the record lists no efforts, then the provider rejects the `none` that `{"enabled": false}`
+# becomes ("Unsupported value: 'none' ... Supported values are: 'low', 'medium', and 'high'"). An
+# empty dict runs it at its own default, which is the best available.
+#
+# minimax-m3: the record lists no efforts either, but `minimal` is real and is the only setting that
+# ever produces prose. With no field, `{"enabled": false}`, or `{"max_tokens": 1000}` it thinks past
+# every cap and returns an empty answer, which cost it 6 of 12 items in the first v97 sweep. At
+# `minimal` it writes 3176 characters (scripts/scratch/filter_probe.py, 2026-08-22).
+EFFORT_OVERRIDE = {"openai/o1": {}, "minimax/minimax-m3": {"reasoning": {"effort": "minimal"}}}
+# Thinking rungs, quietest first. No model lists all of them and the names are not comparable
+# across labs, so the arm is "this model's lowest rung", resolved per model by `_lowest_effort`,
+# rather than one level named here. `none` is thinking switched off, not a low level of it, so it
+# is excluded from the candidate arm and used only on the forced-answer turn.
+EFFORT_RUNGS = ("minimal", "low", "medium", "high", "xhigh", "max")
+# The sentinel for that per-model resolution. Any other value is an explicit override and files as
+# its own variant row.
+REASONING = "lowest"
+# What to call the default arm in the report. It is not one level: the rung differs per model, and
+# each log records the rung it actually got in `effort`.
+EFFORT_ARM = "lowest listed"
 # Who is allowed to serve an answer. Unset, OpenRouter picks by load and price, and
 # deepseek-v4-flash-0731 alone has 28 endpoints of which 7 are fp4 and 6 do not say. An fp4
 # serving of a model is not the model, so a sweep without this is partly measuring the roulette.
@@ -200,6 +236,10 @@ MODELS = {
         "openrouter/anthropic/claude-fable-5",
         "openrouter/anthropic/claude-haiku-4.5",
         "openrouter/thinkingmachines/inkling",
+        # An unnamed lab's model behind OpenRouter's stealth slug, free while it is cloaked, and a
+        # DeepSeek experimental. Neither is on Artificial Analysis, so both sit out the index fits.
+        "openrouter/stealth/ox-alpha",
+        "openrouter/deepseek/deepseek-v4-flash-vision-exp",
     ],
 }
 APP_HEADERS = {
@@ -261,8 +301,43 @@ async def _refusal_reason(model: str, prompt: str) -> str:
     return f"{native}: {refusal}" if refusal else f"no refusal text, native_finish_reason={native}"
 
 
+def _rejoin(partial: str, continuation: str) -> str:
+    """Drop a code fence the continuation reopens inside a block that is already open.
+
+    Cut mid-pseudocode, a model starts its continuation with ```python again, and the naive join
+    reads "# Forward pass to get h_T and h_```python", which an auditor correctly called a
+    corrupted artifact.
+    """
+    if partial.count("```") % 2 == 0:
+        return continuation
+    return re.sub(r"^\s*```[a-z]*\n", "", continuation)
+
+
+async def _finish_answer(state: TaskState, generate: Generate, quiet: dict) -> TaskState:
+    """Thinking ate the budget, so hand the work back and ask for the answer alone.
+
+    Without this a model scores 0 on a question it was solving. claude-opus-5 hit a 4000-token cap
+    on one item and scored 0.000 where its uncapped answer scored 0.976, and that single cell moved
+    its run mean by -0.09 (scripts/scratch/reuse_check.py, 2026-08-21).
+
+    Thinking is switched off here, not lowered, because this turn is for prose. At the model's low
+    rung instead, deepseek-v4-flash-0731 spent 4999 of 5000 tokens thinking and wrote one token of
+    answer; switched off it wrote 3745 (scripts/scratch/two_turn_probe.py, 2026-08-22).
+    """
+    partial = state.output.completion
+    state.messages.append(ChatMessageUser(
+        content="You hit the length limit mid-answer. Continue from exactly where you stopped, "
+                "no repetition and no preamble." if partial.strip() else
+                "Thinking budget spent. Write the answer now, no more analysis."))
+    state = await generate(state, max_tokens=FINAL_ANSWER_MAX_TOKENS, extra_body=quiet)
+    # Grade the whole answer. Judging the continuation alone scores the model on a fragment.
+    state.output.completion = partial + _rejoin(partial, state.output.completion)
+    return state
+
+
 @solver
-def generate_tolerating_content_filter(attempts: int = 3) -> Solver:
+def generate_tolerating_content_filter(quiet: dict | None = None,
+                                       attempts: int = 3) -> Solver:
     """generate(), except a content_filter rejection is retried and then recorded as unanswered.
 
     Anthropic models refuse some of these questions, and the refusal is mostly stochastic: over two
@@ -270,12 +345,18 @@ def generate_tolerating_content_filter(attempts: int = 3) -> Solver:
     refused, and only SV#8 refused every time. So retry
     first. The openai SDK raises ContentFilterFinishReasonError rather than returning a stop_reason,
     which errors the whole sample and used to drop the model from the table entirely.
+
+    An answer cut off by `max_tokens` gets one continuation turn, so the budget bounds thinking
+    rather than deciding the score.
     """
 
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         for attempt in range(attempts):
             try:
-                return await _retry_stream_error(lambda: generate(state))
+                state = await _retry_stream_error(lambda: generate(state))
+                if state.output.stop_reason == "max_tokens":
+                    state = await _finish_answer(state, generate, quiet or {})
+                return state
             except ContentFilterFinishReasonError:
                 print(f"content_filter on {state.sample_id}, attempt {attempt + 1}/{attempts}")
         reason = await _refusal_reason(str(state.model), state.input_text)
@@ -704,13 +785,16 @@ def rubric_judge(panel: tuple[str, ...] | Model = JUDGE_PANEL, passes: int = JUD
     judge-by-model disagreement, so standardising would fix the small part and cost the scale.
     """
     if isinstance(panel, Model):  # the smoke test's mock judge
-        judges = [panel]
+        judges, quiet = [panel], {}
     else:
         # A bare string is one judge, not five one-character judges. `just calibrate` measures one
         # seat at a time and passes its name straight through, and iterating that string asked
         # OpenRouter for a model called "o".
-        judges = [_openrouter_model(name)
-                  for name in ((panel,) if isinstance(panel, str) else panel)]
+        names = (panel,) if isinstance(panel, str) else panel
+        judges = [_openrouter_model(name) for name in names]
+        # Resolved here, not in the retry, so the offline smoke never reaches OpenRouter for a mock
+        # judge that has no model record.
+        quiet = {j.name: _lowest_effort(n) for j, n in zip(judges, names)}
 
     async def score(state: TaskState, target: Target) -> Score:
         rubric: list[dict] = state.metadata["rubric"]
@@ -780,7 +864,8 @@ def rubric_judge(panel: tuple[str, ...] | Model = JUDGE_PANEL, passes: int = JUD
         # on CW#2 and would have taken claude-sonnet-5 out of v96. Over half the
         # panel failing is a harness fault, not a grade, and still raises.
         results = await asyncio.gather(
-            *(_grade(j, prompt, config, p, schema) for j, p in graded_by),
+            *(_grade(j, prompt, config, p, schema, quiet.get(j.name, {}))
+              for j, p in graded_by),
             return_exceptions=True)
         failed = [f"{j.name}: {type(e).__name__}: {e}"[:300]
                   for (j, _), e in zip(graded_by, results) if isinstance(e, BaseException)]
@@ -896,15 +981,16 @@ async def _grade(
     config: GenerateConfig,
     pass_index: int,
     schema: type[BaseModel],
+    quiet: dict,
 ) -> BaseModel:
     """One graded pass. Every rubric id is a required field of `schema`, so none can go missing."""
     return await _retry_stream_error(
-        lambda: _generate_grade(judge, prompt, config, pass_index, schema))
+        lambda: _generate_grade(judge, prompt, config, pass_index, schema, quiet))
 
 
 async def _generate_grade(
     judge: Model, prompt: str, config: GenerateConfig, pass_index: int,
-    schema: type[BaseModel], cache=...
+    schema: type[BaseModel], quiet: dict, cache=...
 ) -> BaseModel:
     cache = _cache(pass_index, judge.name) if cache is ... else cache
     output = await judge.generate(prompt, config=config, cache=cache)
@@ -920,8 +1006,9 @@ async def _generate_grade(
             ],
             # An empty reply means the judge spent every token thinking, so the retry asks for less
             # thinking and gives it 3x the room. Turning reasoning off outright is what gemini 400s
-            # on, and deepseek thinks past a 4k cap even at minimal effort, so neither alone works.
-            config=config.merge(GenerateConfig(reasoning_effort=None, extra_body=REASONING,
+            # on, and deepseek thinks past a 4k cap even at its lowest rung, so neither alone works.
+            config=config.merge(GenerateConfig(reasoning_effort=None,
+                                               extra_body=quiet,
                                                max_tokens=config.max_tokens * 3)),
             cache=cache,
         )
@@ -955,7 +1042,7 @@ async def _generate_grade(
             config=config.merge(GenerateConfig(
                 temperature=1.0,
                 reasoning_effort=None,
-                extra_body=REASONING,
+                extra_body=quiet,
                 max_tokens=config.max_tokens * 3,
             )),
         )
@@ -1031,7 +1118,12 @@ def wassname_ml_bench(
     judge_model: str | Model | tuple[str, ...] = JUDGE_PANEL,
     judge_passes: int = JUDGE_PASSES,
     judge_temperature: float = JUDGE_TEMPERATURE,
-    reasoning: dict = REASONING,
+    # Already resolved to a rung the model lists, by `_lowest_effort` in the caller, because a
+    # batch shares one GenerateConfig and the lowest rung differs per model.
+    reasoning: dict = {},
+    # What the continuation turn sends, from `_quiet_effort` in the caller for the same reason.
+    # Resolved there and not in the solver so the offline smoke never reaches OpenRouter.
+    quiet: dict = {},
     judge_max_tokens: int = JUDGE_MAX_TOKENS,
     epochs: int = 1,
     cache_scope: str | None = None,
@@ -1039,20 +1131,22 @@ def wassname_ml_bench(
     draw: int = 1,
     provider: dict | None = None,
     max_tokens: int = ANSWER_MAX_TOKENS,
+    # None means the default arm, this model's lowest rung, which files in the bare row. A named
+    # level is an override and gets its own row, because a model told to think harder is a
+    # different candidate.
+    effort_label: str | None = None,
 ) -> Task:
     # An uplift variant is its own row in the table, keyed on this scope, so it never shares a
-    # cached answer with the bare model. A non-default effort is a variant too: a model told to think
-    # harder is a different candidate, and without this its answers merge into the bare row.
-    # Both parts, so a skill run at a non-default effort does not file under the skill row alone.
-    # A model with no reasoning setting at all, like gpt-4, is already at its floor, so it files
-    # under the bare row rather than under a variant nothing else can be compared with.
+    # cached answer with the bare model.
+    # A non-default answer budget is a variant for the same reason: an answer written under a
+    # thinking budget is a different answer, and without this it would replay the 40k cache.
     variant = ([f"skill:{Path(skill).parent.name}"] if skill else []) + (
-        [] if reasoning in (REASONING, {})
-        else [f"effort:{reasoning['reasoning']['effort']}"])
+        [] if effort_label is None else [f"effort:{effort_label}"]) + (
+        [] if max_tokens == ANSWER_MAX_TOKENS else [f"budget:{max_tokens}"])
     cache_scope = cache_scope or " ".join(variant) or None
     return Task(
         dataset=bench_dataset(items, skill),
-        solver=generate_tolerating_content_filter(),
+        solver=generate_tolerating_content_filter(quiet),
         scorer=rubric_judge(judge_model, judge_passes, judge_temperature, judge_max_tokens),
         epochs=Epochs(epochs, "mean"),
         config=GenerateConfig(
@@ -1076,6 +1170,9 @@ def wassname_ml_bench(
         ),
         metadata={"rubric_version": RUBRIC_VERSION, "judge": _judge_id(judge_model),
                   "cache_scope": cache_scope, "draw": draw,
+                  # The rung these answers actually ran at. The arm is "lowest listed", which is a
+                  # different level per model, so the report cannot name it from a constant.
+                  "effort": reasoning.get("reasoning", {}).get("effort"),
                   # Which serving policy produced these answers, so a table never mixes two.
                   "provider": json.dumps((provider or {}).get("provider", {}), sort_keys=True)},
         fail_on_error=0.1,
@@ -1206,8 +1303,9 @@ def _uplift(variants: list[dict], base: list[dict], items: list[str]) -> list[di
     groups = []
     for model in {v["model"].partition(" (")[0] for v in variants}:
         bare = bare_of[model]
-        rows = [{"model": model, "variant": f"effort:{REASONING['reasoning']['effort']} (default)",
-                 "score": bare["score"], "lift": None, "lift +-": None, "ktok": bare["ktok"]}]
+        rows = [{"model": model, "variant": f"effort:{EFFORT_ARM} (default)",
+                 "score": bare["score"], "lift": None, "lift +-": None,
+                 "tok/answer": bare["tok/answer"]}]
         for v in variants:
             name, _, scope = v["model"].partition(" (")
             if name != model:
@@ -1218,14 +1316,15 @@ def _uplift(variants: list[dict], base: list[dict], items: list[str]) -> list[di
                          "score": v["score"],
                          "lift": statistics.mean(diffs),
                          "lift +-": statistics.stdev(diffs) / math.sqrt(len(diffs)),
-                         "ktok": v["ktok"]})
+                         "tok/answer": v["tok/answer"]})
         # Best score first, inside a model and between models, so the table reads like the main one.
         groups.append(sorted(rows, key=lambda row: -row["score"]))
     return [row for group in sorted(groups, key=lambda g: -g[0]["score"]) for row in group]
 
 
-def _thousands(tokens: int | None) -> float | None:
-    return None if tokens is None else tokens / 1000
+def _per_answer(tokens: int | None, n_items: int) -> float | None:
+    """Tokens for one answer. `tokens` is the model's bill for the whole run of n_items."""
+    return None if tokens is None else tokens / n_items
 
 
 def _millions(tokens: int | None) -> float | None:
@@ -1249,11 +1348,12 @@ def _fallback_note(borrow: tuple[str, set[str]] | None, n_items: int) -> str | N
 def _ktok_text(row: dict) -> str:
     """Tokens for the hover card. Unknown when every answer came from the cache, which records
     no usage at all."""
-    if row["ktok"] is None:
+    if row["tok/answer"] is None:
         return "tokens unknown, answers served from cache"
     share = row.get("reasoning share")
-    return (f"{row['ktok']:.1f}k tokens generated, reasoning included"
-            + (f"<br>reasoning effort '{REASONING['reasoning']['effort']}', and "
+    return (f"{row['tok/answer']:,.0f} tokens per answer, reasoning included, against a "
+            f"{ANSWER_MAX_TOKENS:,}-token thinking budget"
+            + (f"<br>reasoning effort '{EFFORT_ARM}', and "
                f"{share:.0%} of the output was reasoning" if share is not None else ""))
 
 
@@ -1590,10 +1690,12 @@ def _results(log_dir: str, judge: str) -> None:
          # The model's own tokens for the 12 questions. Not the judge's bill, which is bench
          # overhead, is about the same for every candidate, and hid the cheap end of the axis.
          "$/run": usage.get(model, {}).get("usd"),
-         # Tokens the model generated, reasoning included. Blank, not zero, when every answer came
-         # from cache: the cache records no usage, so the number is unknown, and a 0.00 read as a
-         # real result got bolded as the best row.
-         "ktok": _thousands(usage.get(model, {}).get("out")),
+         # Tokens per answer, reasoning included, so the cell compares directly against
+         # ANSWER_MAX_TOKENS. It read as a per-answer mean while it was a 12-question sum, which made
+         # a model at 1.3k per answer look like it had blown a 4k budget six times over.
+         # Blank, not zero, when every answer came from cache: the cache records no usage, so the
+         # number is unknown, and a 0.00 read as a real result got bolded as the best row.
+         "tok/answer": _per_answer(usage.get(model, {}).get("out"), n_items),
          # Score per thousand tokens. A model that thinks three times as long for the same score is
          # worse to work with, and cost cannot show that: an expensive model can still be terse.
          "pts/Mtok": _ratio(_mean_if_complete(scores.values(), model, incomplete),
@@ -1632,7 +1734,7 @@ def _results(log_dir: str, judge: str) -> None:
         .fmt_number(columns=["score", *items], decimals=2, force_sign=True)
         .fmt_number(columns=["+-"], decimals=3, pattern="±{x}")
         .fmt_number(columns=["pts/Mtok"], decimals=0)
-        .fmt_number(columns=["ktok"], n_sigfig=3)
+        .fmt_number(columns=["tok/answer"], decimals=0)
         # Significant figures, not decimals: at 2 decimals muse-spark-1.2 and claude-fable-5 both
         # rounded to $0.00 and looked free.
         .fmt_number(columns=["$/run"], n_sigfig=2, pattern="${x}")
@@ -1652,7 +1754,7 @@ def _results(log_dir: str, judge: str) -> None:
                           loc.body(columns=sorted(gaps), rows=[i]))
     # cols_rank compares against None, so a column holding a blank cell cannot be ranked. That
     # column is the one worth reading, so it stays in the table without the arrow.
-    directions = {"score": "up", "pts/Mtok": "up", "$/run": "down", "ktok": "down",
+    directions = {"score": "up", "pts/Mtok": "up", "$/run": "down", "tok/answer": "down",
                   **{item: "up" for item in items}}
     # Bold the whole tie, not the winner of a coin flip. A row carries its own error bar, and a
     # single cell rests on the four or five seats that graded it.
@@ -1671,8 +1773,9 @@ def _results(log_dir: str, judge: str) -> None:
         answered=("AGENTS.md", f"the model's own answers. Below {n_items} the mean is not "
                                "comparable, so the score stays blank, unless a fallback model "
                                "fills the refused questions"),
-        ktok=("AGENTS.md", "thousands of tokens the model generated over the whole run, "
-                           "reasoning included"),
+        **{"tok/answer": ("AGENTS.md", f"tokens the model generated for one answer, reasoning "
+                                       f"included, against a {ANSWER_MAX_TOKENS:,}-token thinking "
+                                       f"budget")},
         **{"pts/Mtok": ("AGENTS.md", "score per million tokens. A model that writes more for "
                                      "the same score ranks lower")},
     )
@@ -1763,7 +1866,7 @@ def _results(log_dir: str, judge: str) -> None:
         notes["bar"] = None
     # Two charts, same table: dollars are the vendor's price, tokens are what the model spends.
     cost_png = _pareto(table, "$/run", suffix, parts)
-    token_png = _pareto(table, "ktok", suffix, parts)
+    token_png = _pareto(table, "tok/answer", suffix, parts)
     tables["unanswered"] = tabulate(
         sorted(unanswered, key=lambda r: (r["model"], r["question"], r["draw"])),
         headers="keys", tablefmt="pipe") if unanswered else ""
@@ -1814,11 +1917,10 @@ def _results(log_dir: str, judge: str) -> None:
         "columns": _COLUMN_HELP,
         # Who graded, how each seat is calibrated, and what the own-family dropout costs. A list
         # either way, so a single judge and a panel read the same on the page.
-        # The default for the table. A reasoning model at minimal effort is not the same model a
-        # reader meets at default effort, so the page has to say so. A row run at another effort
-        # carries it in its own name, `grok-4.6 (effort:high)`, so this stays the default and the
-        # exceptions are visible in the row.
-        "reasoning_effort": REASONING["reasoning"]["effort"],
+        # The default for the table: every model at the quietest rung it lists, which is not one
+        # level and is not each model's own default, so the page has to say so. A row run at a
+        # named effort carries it in its own name, `grok-4.6 (effort:high)`.
+        "reasoning_effort": EFFORT_ARM,
         "judge": {"models": judge.replace("openrouter/", "").split("+"),
                   "passes": JUDGE_PASSES, "temperature": JUDGE_TEMPERATURE,
                   # Each seat's two measured anchors, from `just calibrate`: what it scores an
@@ -1877,7 +1979,7 @@ def _results(log_dir: str, judge: str) -> None:
                       "cost": cost_png.name, "tokens": token_png.name},
            "n_items": n_items, "version": RUBRIC_VERSION,
            "best_score": max(r["score"] for r in table if r["score"] is not None),
-           "effort": REASONING["reasoning"]["effort"],
+           "effort": EFFORT_ARM,
            "effort_gap_max": max(AA_EFFORT_GAP.values())}
     print(_render_page(ctx, private=True), end="")
     # The public copy is the same template with the private sections switched off, so nothing has to
@@ -1938,7 +2040,7 @@ _COLUMN_HELP = {
                  "carefully, not an easier question.",
     "$/run": "The cost of one run of all 12 questions. This counts the model's own tokens, not "
              "the judge's.",
-    "ktok": "Thousands of tokens the model generated, reasoning included.",
+    "tok/answer": "Tokens the model generated for one answer, reasoning included.",
     "pts/Mtok": "Score per million tokens. A model that writes more for the same score ranks "
                 "lower.",
 }
@@ -1968,6 +2070,8 @@ def _company(model: str) -> str:
         "minimax": "MiniMax",
         "xiaomi": "Xiaomi",
         "thinkingmachines": "Thinking Machines",
+        # OpenRouter's cloak for a model whose lab is not announced yet.
+        "stealth": "Stealth",
     }[model.split("/")[0]]
 
 
@@ -2044,6 +2148,8 @@ RELEASED = {
     "deepseek-v4-pro-0813": "2026-08-13", "qwen3.8-27b": "2026-08-14",
     # OpenRouter's own created field, 1787086655.
     "glm-5.3": "2026-08-18",
+    # Same, for the two AA does not list: 1787256295 and 1787311563.
+    "ox-alpha": "2026-08-20", "deepseek-v4-flash-vision-exp": "2026-08-21",
     "qwen3.5-27b": "2026-02-24", "glm-5.1": "2026-04-07", "qwen3.6-27b": "2026-04-22",
     "gpt-5.5": "2026-04-23", "claude-opus-4.8": "2026-05-28", "grok-4.5": "2026-07-08",
     # OpenAI's own announcement days, not AA, which lists neither.
@@ -2142,9 +2248,9 @@ def _frontier(table: list[dict], x: str) -> set[str]:
 _X_AXES = {
     "$/run": {"stem": "pareto", "prefix": "$", "corner": "powerful and cheap",
               "subtitle": "Lower cost is better", "title": "$ per run, all {n} items"},
-    "ktok": {"stem": "pareto_tokens", "prefix": "", "corner": "powerful and terse",
-             "subtitle": "Fewer tokens is better",
-             "title": "thousands of tokens per run, all {n} items, reasoning included"},
+    "tok/answer": {"stem": "pareto_tokens", "prefix": "", "corner": "powerful and terse",
+                   "subtitle": "Fewer tokens is better",
+                   "title": "tokens per answer, reasoning included"},
 }
 
 
@@ -2243,7 +2349,7 @@ def _pareto(table: list[dict], x: str = "$/run", suffix: str = "",
         # Pre-format the tooltip in Python: plotly's %{y:.2f} hovertemplate specifier is
         # unreliable across versions and silently falls back to full precision.
         hovertext=[
-            f"{r['model']} ({REASONING['reasoning']['effort']})<br>{r['company']}"
+            f"{r['model']} ({EFFORT_ARM})<br>{r['company']}"
             f"<br>score {r['score']:+.2f}"
             + (f"<br>{r['fallback']}" if r.get("fallback") else "")
             + f"<br>${r['$/run']:.3g} per run"
@@ -2716,15 +2822,63 @@ def _estimate(tier: str, log_dir: str) -> None:
           "A model that writes more than the profile costs more, hence the 2x column.")
 
 
-def _prices() -> dict[str, tuple[float, float]]:
-    """(input, output) USD per token from OpenRouter's public model list. No key needed."""
+@cache
+def _model_records() -> dict[str, dict]:
+    """OpenRouter's public model list, keyed by id. No key needed."""
     import json
     import urllib.request
 
     with urllib.request.urlopen("https://openrouter.ai/api/v1/models", timeout=30) as response:
-        models = json.load(response)["data"]
-    return {m["id"]: (float(m["pricing"]["prompt"]), float(m["pricing"]["completion"]))
-            for m in models}
+        return {m["id"]: m for m in json.load(response)["data"]}
+
+
+def _prices() -> dict[str, tuple[float, float]]:
+    """(input, output) USD per token from OpenRouter's public model list. No key needed."""
+    return {i: (float(m["pricing"]["prompt"]), float(m["pricing"]["completion"]))
+            for i, m in _model_records().items()}
+
+
+@cache
+def _lowest_effort(model: str) -> dict:
+    """The quietest thinking rung this model actually lists, as an `extra_body` fragment.
+
+    Sending a rung a model does not have is not an error. The provider silently falls back to its
+    own default, so the run measures that default while the report claims the level we asked for.
+    That is what happened under a hardcoded `minimal`: 28 of the 32 models in `MODELS["hle"]` do
+    not list it, and grok-4.6 (`[xhigh, high, medium, low]`, default `high`) answered a whole table
+    at `high` while every chart said `minimal`. Measured 2026-08-22: at a real `low` it writes 1328
+    tokens against 5922 under `minimal`.
+
+    A model with no rungs at all keeps an empty dict and runs at its default, because there is
+    nothing to ask for. OpenRouter's record is not always right about this, so `EFFORT_OVERRIDE`
+    carries the measured rung for the two it gets wrong.
+
+    SHOULD: claude-opus-5 -> low, glm-5.2 -> high (its floor), gpt-4 -> {}. ELSE the roster moved
+    or OpenRouter renamed a rung, and the arm is no longer the lowest rung.
+    """
+    if model.removeprefix("openrouter/") in EFFORT_OVERRIDE:
+        return EFFORT_OVERRIDE[model.removeprefix("openrouter/")]
+    record = _model_records()[model.removeprefix("openrouter/")]
+    listed = (record.get("reasoning") or {}).get("supported_efforts") or []
+    ranked = [rung for rung in EFFORT_RUNGS if rung in listed]
+    return {"reasoning": {"effort": ranked[0]}} if ranked else {}
+
+
+@cache
+def _quiet_effort(model: str) -> dict:
+    """What to send on the continuation turn, which wants prose and not more thinking.
+
+    Three cases, because no single setting works for the whole roster. Most models take
+    `{"enabled": false}` and then spend nothing on thinking. A model whose reasoning is mandatory
+    400s on it ("Reasoning is mandatory for this endpoint and cannot be disabled") and gets its
+    lowest rung instead. `EFFORT_OVERRIDE` holds the two whose record is wrong.
+    """
+    if model.removeprefix("openrouter/") in EFFORT_OVERRIDE:
+        return EFFORT_OVERRIDE[model.removeprefix("openrouter/")]
+    record = _model_records()[model.removeprefix("openrouter/")]
+    if (record.get("reasoning") or {}).get("mandatory"):
+        return _lowest_effort(model)
+    return {"reasoning": {"enabled": False}}
 
 
 @cache
@@ -2990,15 +3144,32 @@ def _smoke() -> None:
     item = items[0]
     expected_student_inputs = {item["prompt"] + EXIT_INTERVIEW for item in items}
     seen_student_inputs = []
+    continuation_seen = []
 
     judge_calls: dict[str, int] = {}
 
+    # One item is cut off mid-answer, so the continuation turn runs in the smoke and the graded
+    # answer must come back whole. Without this the truncation path is never exercised offline.
+    # Picked by position, not by name, because item ids may not appear in the published bench.py.
+    CUT_ITEM = items[0]["id"]
+    SMOKE_QUIET = {"reasoning": {"enabled": False}}
+    HALF, REST = ANSWER_UNDER_TEST[:20], ANSWER_UNDER_TEST[20:]
+
     async def mock_candidate(input, tools, tool_choice, config) -> ModelOutput:
         prompt = input[0].text
+        if "length limit mid-answer" in input[-1].text:
+            # The continuation asks for prose only, and carries the cut answer for context.
+            assert config.max_tokens == FINAL_ANSWER_MAX_TOKENS, config.max_tokens
+            assert config.extra_body == SMOKE_QUIET, config.extra_body
+            continuation_seen.append(prompt)
+            return ModelOutput.from_content("mockllm", REST)
         assert prompt in expected_student_inputs, "candidate received more than the parsed prompt"
         seen_student_inputs.append(prompt)
-        assert config.extra_body == REASONING, config.extra_body
         assert config.max_tokens == ANSWER_MAX_TOKENS, config.max_tokens
+        if next(i["id"] for i in items if i["prompt"][:80] in prompt) == CUT_ITEM:
+            return ModelOutput(model="mockllm", choices=[ChatCompletionChoice(
+                message=ChatMessageAssistant(content=HALF, model="mockllm"),
+                stop_reason="max_tokens")])
         return ModelOutput.from_content("mockllm", ANSWER_UNDER_TEST)
 
     async def mock_judge(input, tools, tool_choice, config) -> ModelOutput:
@@ -3015,7 +3186,6 @@ def _smoke() -> None:
             return ModelOutput(model="mockllm", choices=[ChatCompletionChoice(
                 message=ChatMessageAssistant(content="", model="mockllm"), stop_reason="max_tokens")])
         assert ANSWER_UNDER_TEST in input[0].text, "judge correction lost the candidate answer"
-        assert config.extra_body == REASONING, config.extra_body
         assert graded["gold_answer"][:80] in prompt, "judge must see the reference answer"
         assert ANSWER_UNDER_TEST in prompt, "judge must see the candidate answer"
         # One field per rubric id, the shape grade_model() builds.
@@ -3039,6 +3209,7 @@ def _smoke() -> None:
             wassname_ml_bench(
                 judge_model=get_model("mockllm/judge", custom_outputs=mock_judge),
                 judge_passes=2,
+                quiet=SMOKE_QUIET,
             ),
             model=get_model("mockllm/candidate", custom_outputs=mock_candidate),
             log_dir=f"{tmp}/logs",
@@ -3055,6 +3226,14 @@ def _smoke() -> None:
             points = by_id[graded["id"]].scores["rubric_judge"].metadata["points"]
             assert points[BEYOND_ID] == BEYOND_WEIGHT * 0.5, points[BEYOND_ID]
         assert all(calls == 6 for calls in judge_calls.values()), judge_calls
+        # A cut-off answer is continued and graded whole, not scored 0 for hitting the cap.
+        assert len(continuation_seen) == 1, continuation_seen
+        cut = by_id[CUT_ITEM].scores["rubric_judge"]
+        assert cut.value["answered"] == 1.0, cut.explanation
+        assert cut.answer == ANSWER_UNDER_TEST, cut.answer
+        # A continuation that reopens a fence inside an open one must not paste the fence back in.
+        assert _rejoin("text ```py\ncode", "```py\nmore") == "more"
+        assert _rejoin("text ```py\ncode```", "```py\nmore") == "```py\nmore"
         # The panel: one company per seat, so a judge sitting out its own family still leaves four.
         seats = [_company_of(m) for m in JUDGE_PANEL]
         assert len(set(seats)) == len(seats), f"two seats from one company: {seats}"
@@ -3109,11 +3288,19 @@ def _smoke() -> None:
         # Both parts show, so a skill run at a raised effort is not filed as the skill variant.
         high = {"reasoning": {"effort": "high"}}
         assert wassname_ml_bench().metadata["cache_scope"] is None
-        assert wassname_ml_bench(reasoning=high).metadata["cache_scope"] == "effort:high"
+        assert wassname_ml_bench(reasoning=high, effort_label="high"
+                                 ).metadata["cache_scope"] == "effort:high"
+        # The default arm is each model's lowest rung, so it is a bare row even though the config
+        # carries a real effort. Without this a resolved rung would split every model into a variant.
+        assert wassname_ml_bench(reasoning={"reasoning": {"effort": "low"}}
+                                 ).metadata["cache_scope"] is None
+        # A budget other than the default is a variant too, or it replays the default's answers.
+        assert wassname_ml_bench(max_tokens=40_000).metadata["cache_scope"] == "budget:40000"
+        assert wassname_ml_bench(max_tokens=ANSWER_MAX_TOKENS).metadata["cache_scope"] is None
         fake_skill = Path(tempfile.mkdtemp()) / "ml-debug" / "SKILL.md"
         fake_skill.parent.mkdir()
         fake_skill.write_text("fixture skill")
-        assert wassname_ml_bench(skill=str(fake_skill), reasoning=high
+        assert wassname_ml_bench(skill=str(fake_skill), reasoning=high, effort_label="high"
                                  ).metadata["cache_scope"] == "skill:ml-debug effort:high"
         assert _cited("fixture", PointCheck(lines="1,1", rung="1.0", score=1.0),
                       ANSWER_UNDER_TEST, [])
@@ -3243,20 +3430,28 @@ if __name__ == "__main__":
             # Models that share a serving policy share an eval call, so the run keeps its
             # parallelism. In practice that is two groups: those with a quantization to filter on
             # and those without. Grouped on the name, before it becomes a Model.
-            groups: dict[str, list] = {}
+            # Keyed on the serving policy and on the resolved thinking rung, because one eval call
+            # shares one GenerateConfig and two models rarely have the same lowest rung.
+            groups: dict[tuple[str, str], list] = {}
             for name in args.model.split(","):
-                key = json.dumps(_provider_prefs(name), sort_keys=True)
+                resolved = _lowest_effort(name) if reasoning == REASONING else reasoning
+                key = (json.dumps(_provider_prefs(name), sort_keys=True),
+                       json.dumps(resolved, sort_keys=True),
+                       json.dumps(_quiet_effort(name), sort_keys=True))
                 groups.setdefault(key, []).append(_openrouter_model(name))
             # Draws outermost, so every model gets its second answer before any gets its third.
             # A provider having a bad hour then hits one draw of everything rather than every draw
             # of one model, where it would read as that model being worse.
             for draw in range(1, args.draws + 1):
-                for prefs, batch in groups.items():
+                for (prefs, resolved_json, quiet_json), batch in groups.items():
                     logs = inspect_eval(
                         wassname_ml_bench(args.items, args.judge_model, args.judge_passes,
-                                          args.judge_temperature, reasoning, args.judge_max_tokens,
+                                          args.judge_temperature, json.loads(resolved_json),
+                                          json.loads(quiet_json), args.judge_max_tokens,
                                           skill=args.skill, draw=draw, provider=json.loads(prefs),
-                                          max_tokens=args.max_tokens),
+                                          max_tokens=args.max_tokens,
+                                          effort_label=None if reasoning == REASONING
+                                          else reasoning["reasoning"]["effort"]),
                         model=batch,
                         log_dir=args.log_dir,
                         log_model_api=True,
