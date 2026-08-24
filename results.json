@@ -915,10 +915,10 @@
   {
    "model": "deepseek-v4-flash-0731",
    "comparison": "low -> high effort",
-   "from": 0.5203679191385477,
+   "from": 0.5453786889657857,
    "to": 0.48156706578781594,
-   "lift": -0.03880085335073181,
-   "lift +-": 0.04522959131029894,
+   "lift": -0.06381162317796969,
+   "lift +-": 0.0287945527419431,
    "tok/answer": 12444.333333333334,
    "budget": 12000
   }
@@ -1201,33 +1201,33 @@
     "gold": 0.9901,
     "gap": 0.98,
     "leniency": 0.006,
-    "judgments": 411
+    "judgments": 421
    },
    "openai/gpt-oss-120b": {
     "off_topic": -0.0158,
     "gold": 0.9962,
     "gap": 1.012,
     "leniency": 0.069,
-    "judgments": 351
+    "judgments": 361
    },
    "qwen/qwen3.7-flash": {
     "off_topic": -0.0037,
     "gold": 0.9923,
     "gap": 0.996,
     "leniency": -0.014,
-    "judgments": 387
+    "judgments": 397
    },
    "thinkingmachines/inkling-small": {
     "off_topic": -0.02,
     "gold": 0.9877,
     "gap": 1.008,
-    "leniency": -0.014,
-    "judgments": 423
+    "leniency": -0.012,
+    "judgments": 433
    }
   },
   "disagreement": {
-   "sd": 0.121,
-   "judgments_per_row": 53,
+   "sd": 0.124,
+   "judgments_per_row": 54,
    "se": 0.017
   },
   "dropout": {
@@ -1237,8 +1237,8 @@
    "deepseek-v4-flash-0731 (skill:ml-debug budget:12000)": 0.012,
    "deepseek-v4-flash-vision-exp": 0.012,
    "deepseek-v4-pro-0813": 0.012,
-   "gemini-3.6-flash": -0.002,
-   "gemini-3.7-flash": -0.002,
+   "gemini-3.6-flash": -0.001,
+   "gemini-3.7-flash": -0.001,
    "gpt-4": -0.017,
    "gpt-5.5": -0.017,
    "gpt-5.6-luna": -0.017,
@@ -1246,20 +1246,20 @@
    "gpt-5.6-terra": -0.017,
    "gpt-oss-120b": -0.017,
    "o1": -0.017,
-   "qwen3.5-27b": 0.003,
-   "qwen3.5-9b": 0.003,
-   "qwen3.6-27b": 0.003,
-   "qwen3.8-max": 0.003,
+   "qwen3.5-27b": 0.004,
+   "qwen3.5-9b": 0.004,
+   "qwen3.6-27b": 0.004,
+   "qwen3.8-max": 0.004,
    "inkling": 0.003
   }
  },
  "uncertainty": {
   "model": "deepseek-v4-flash-0731 (budget:12000)",
   "draws": 2,
-  "total": 0.087,
+  "total": 0.081,
   "parts": {
-   "between questions": 0.08,
-   "between answers": 0.029,
+   "between questions": 0.071,
+   "between answers": 0.036,
    "between judges": 0.017
   }
  },

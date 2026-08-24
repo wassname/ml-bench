@@ -61,11 +61,13 @@ qualifies. Eval version 97.
 | model                  | comparison         |   from |    to |   lift |   lift +- |   tok/answer |   budget |
 |:-----------------------|:-------------------|-------:|------:|-------:|----------:|-------------:|---------:|
 | grok-4.6               | low -> high effort |  +0.56 | +0.64 | +0.078 |     0.028 |         6788 |     4000 |
-| deepseek-v4-flash-0731 | low -> high effort |  +0.52 | +0.48 | -0.039 |     0.045 |        12444 |    12000 |
+| deepseek-v4-flash-0731 | low -> high effort |  +0.55 | +0.48 | -0.064 |     0.029 |        12444 |    12000 |
 
-How much does a skill or higher effort increase a model's score? Each row is the same model on the
-same 12 questions with one thing changed. `lift` is against the default row, paired by
-question, so a lift is real only when it beats `lift +-`.
+Each row is one model answering the same 12 questions twice with one thing changed, first
+the reasoning rung, then a skill document on top of the high rung. `lift` is paired by question, so
+it counts only when it beats `lift +-`. Both sides of a row share a thinking budget, since a
+document read under a budget the model was already spending on thinking measures crowding rather
+than the document.
  
 ## Score vs release date
 
@@ -77,7 +79,7 @@ When will a model be as good as me (wassname)? <!-- -- wassname -->
 
 claude-fable-5 refuses questions its provider blocks, 3 of 12 in at least one draw. The 3 it never answered (AP#1, OL#6, SV#8). Those cells take claude-opus-5's score, shown in italic. The row then measures a pair of models, and $/run counts only its own tokens.
 
-What the `+-` bar is made of, measured on deepseek-v4-flash-0731 (budget:12000) over 2 answers to each question, in row units and added in quadrature: between questions 0.080, between answers 0.029, between judges 0.017. They come to 0.087, against 0.091 on a single answer, and that row's own `+-` of 0.091, which is the spread of its 12 cells, is the other way of measuring the same bar. Only the middle part shrinks with more answers; the first needs more questions.
+What the `+-` bar is made of, measured on deepseek-v4-flash-0731 (budget:12000) over 2 answers to each question, in row units and added in quadrature: between questions 0.071, between answers 0.036, between judges 0.017. They come to 0.081, against 0.088 on a single answer, and that row's own `+-` of 0.085, which is the spread of its 12 cells, is the other way of measuring the same bar. Only the middle part shrinks with more answers; the first needs more questions.
 
 ### The judges
 
@@ -91,8 +93,8 @@ be one).
 
 | judge                           |   judgments |   off-topic |   gold |    gap |   leniency |
 |:--------------------------------|------------:|------------:|-------:|-------:|-----------:|
-| openai/gpt-oss-120b             |         351 |      -0.016 | +0.996 | +1.012 |     +0.069 |
-| google/gemma-4-31b-it           |         411 |      +0.010 | +0.990 | +0.980 |     +0.006 |
-| thinkingmachines/inkling-small  |         423 |      -0.020 | +0.988 | +1.008 |     -0.014 |
-| qwen/qwen3.7-flash              |         387 |      -0.004 | +0.992 | +0.996 |     -0.014 |
+| openai/gpt-oss-120b             |         361 |      -0.016 | +0.996 | +1.012 |     +0.069 |
+| google/gemma-4-31b-it           |         421 |      +0.010 | +0.990 | +0.980 |     +0.006 |
+| thinkingmachines/inkling-small  |         433 |      -0.020 | +0.988 | +1.008 |     -0.012 |
+| qwen/qwen3.7-flash              |         397 |      -0.004 | +0.992 | +0.996 |     -0.014 |
 | deepseek/deepseek-v4-flash-0731 |         341 |      -0.008 | +0.997 | +1.005 |     -0.048 |
