@@ -1304,47 +1304,71 @@ def _arm_scope(row: dict) -> dict:
     return scope
 
 
-def _pair(a: dict, b: dict, items: list[str]) -> dict:
-    """b against a, paired by question over the 12 both answered.
+def _lift(a: dict, b: dict, items: list[str]) -> dict:
+    """The error bar on b minus a, paired by question over the 12 both answered.
+
+    The change itself is not returned: it is the difference of two scores the table already prints.
 
     Never paired by draw: the draw index is a cache scope, not a seed, so draw 3 of one arm is not
     the partner of draw 3 of the other, and the pairing chosen would decide the sign (AGENTS.md 6).
     """
     diffs = [b[i] - a[i] for i in items]
-    return {"from": a["score"], "to": b["score"], "lift": statistics.mean(diffs),
-            "lift +-": statistics.stdev(diffs) / math.sqrt(len(diffs)),
-            "tok/answer": b["tok/answer"]}
+    return {"+-": statistics.stdev(diffs) / math.sqrt(len(diffs))}
+
+
+def _thinking(row: dict) -> float | None:
+    """Reasoning tokens for one answer, which is what a reasoning rung is supposed to move."""
+    share = row.get("reasoning share")
+    return None if share is None or row["tok/answer"] is None else row["tok/answer"] * share
+
+
+# The ladder a model climbs, each rung one change from the rung above it.
+_RUNGS = [("low effort", dict(skill=None, effort=EFFORT_ARM)),
+          ("high effort", dict(skill=None, effort="high")),
+          ("high effort + skill:ml-debug", dict(skill="ml-debug", effort="high"))]
+
+
+def _ladder(mine: list[tuple[dict, dict]], budget: int) -> list[tuple[str, dict]]:
+    """The rungs this model has at this budget, lowest first, dropping any the provider ignored."""
+    rungs = [(label, [row for row, s in mine if s["budget"] == budget
+                      and all(s[k] == v for k, v in want.items())])
+             for label, want in _RUNGS]
+    rungs = [(label, found[0]) for label, found in rungs if found]
+    # A rung the provider did not honour is not a comparison. deepseek's lowest listed rung thinks
+    # to the cap like its highest, 11,832 tokens against 12,444, so its "low" arm is the same
+    # candidate as its "high" one and only the budget ever controlled it. Grok's rungs are real,
+    # 1,169 against 6,788. Threshold on thinking, not on the label.
+    if len(rungs) > 1 and rungs[0][0] == "low effort":
+        thinking = [_thinking(arm) for _, arm in rungs[:2]]
+        if all(thinking) and thinking[1] < 1.2 * thinking[0]:
+            rungs = rungs[1:]
+    return rungs if len(rungs) > 1 else []
 
 
 def _uplift(variants: list[dict], base: list[dict], items: list[str]) -> list[dict]:
-    """One row per comparison, two per model: the reasoning rung, then a skill on top of it.
+    """One row per arm, in ladder order, so `lift` reads against the row above it.
 
-    Every comparison holds the other two knobs fixed, so a row is one changed thing. Both arms are
-    read at the largest budget where both exist, because a document read under a budget the model
-    was already spending on thinking measures crowding rather than the document
-    (logs_capbound/README.md).
+    The whole section runs at one thinking budget, the largest any model has a ladder at, and a
+    model with no ladder there is left out rather than compared across budgets. A document read
+    under a budget the model was already spending on thinking measures crowding rather than the
+    document (logs_capbound/README.md), so the budget has to be held fixed and worth stating once
+    in the prose instead of carried as a column.
     """
-    arms = [(row, _arm_scope(row)) for row in variants + base]
-    rows = []
-    for model in {row["model"].partition(" (")[0] for row, _ in arms}:
-        mine = [(row, s) for row, s in arms if row["model"].partition(" (")[0] == model
-                and row["score"] is not None]
-        for label, low, high in (
-            ("low -> high effort",
-             dict(skill=None, effort=EFFORT_ARM), dict(skill=None, effort="high")),
-            ("high effort + skill:ml-debug",
-             dict(skill=None, effort="high"), dict(skill="ml-debug", effort="high")),
-        ):
-            # The largest budget carrying both sides of this comparison, so the two arms match.
-            for budget in sorted({s["budget"] for _, s in mine}, reverse=True):
-                def side(want, budget=budget):
-                    return [row for row, s in mine if s["budget"] == budget
-                            and all(s[k] == v for k, v in want.items())]
-                if side(low) and side(high):
-                    rows.append({"model": model, "comparison": label,
-                                 **_pair(side(low)[0], side(high)[0], items), "budget": budget})
-                    break
-    return sorted(rows, key=lambda row: -row["lift"])
+    arms = [(row, _arm_scope(row)) for row in variants + base if row["score"] is not None]
+    by_model = {model: [(row, s) for row, s in arms
+                        if row["model"].partition(" (")[0] == model]
+                for model in {row["model"].partition(" (")[0] for row, _ in arms}}
+    budgets = sorted({s["budget"] for _, s in arms}, reverse=True)
+    budget = next((b for b in budgets if any(_ladder(mine, b) for mine in by_model.values())), None)
+    groups = [[{"model": model, "arm": label, "score": arm["score"],
+                # The first rung is the thing being lifted from, so it has no lift of its own.
+                **({"+-": None} if i == 0 else _lift(ladder[i - 1][1], arm, items)),
+                "tok/answer": arm["tok/answer"]}
+               for i, (label, arm) in enumerate(ladder)]
+              for model, mine in by_model.items() if (ladder := _ladder(mine, budget))]
+    # Models by their best rung, rungs in ladder order inside a model.
+    return [row for group in sorted(groups, key=lambda g: -max(r["score"] for r in g))
+            for row in group]
 
 
 def _per_answer(tokens: int | None, n_items: int) -> float | None:
@@ -1810,12 +1834,23 @@ def _results(log_dir: str, judge: str) -> None:
     # docs/page.md.j2, which is the one file to edit. -- CLAUDE
     tables = {"main": to_markdown(gt)}
     lifts = _uplift(variants, table, items)
-    # Seven columns, because this table is read on a phone. Scores to 2 decimals like the main
-    # table. The lift and its bar keep 3: the smallest lift here is 0.013 and rounding it to 0.01
-    # would hide whether it beat its own bar.
-    tables["uplift"] = tabulate(lifts, headers="keys", tablefmt="pipe", missingval="",
-                                floatfmt=("", "", "+.2f", "+.2f", "+.3f", ".3f", ".0f", ",.0f")
-                                ) if lifts else ""
+    if lifts:
+        # Same typography as the main table: score is the ranked column, bold covers the tie within
+        # one error bar. The change against the row above is the difference of two printed scores,
+        # so only its bar is a column, at 3 decimals because the smallest change worth reading here
+        # is 0.013 and 2 decimals would hide whether it beat that bar.
+        bars = [row["+-"] for row in lifts if row["+-"] is not None]
+        lift_gt = (
+            GT(pl.DataFrame(lifts, nan_to_null=True), rowname_col="model")
+            .fmt_number(columns=["score"], decimals=2, force_sign=True)
+            .fmt_number(columns=["+-"], decimals=3, pattern="±{x}")
+            .fmt_number(columns=["tok/answer"], decimals=0)
+            .sub_missing(missing_text="")
+        )
+        tables["uplift"] = to_markdown(_rank(
+            lift_gt, lifts, {"score": statistics.median(bars) if bars else 0.0}, score="up"))
+    else:
+        tables["uplift"] = ""
     # Three charts against numbers this bench did not produce: two public tests, and the calendar.
     suffix = _report_suffix(judge)
     index_png, index_fit = _versus(table, "index", suffix)

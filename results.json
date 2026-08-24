@@ -903,24 +903,18 @@
  ],
  "uplift": [
   {
-   "model": "grok-4.6",
-   "comparison": "low -> high effort",
-   "from": 0.5636188867210447,
-   "to": 0.6417620990137496,
-   "lift": 0.07814321229270492,
-   "lift +-": 0.027831687475363003,
-   "tok/answer": 6788.333333333333,
-   "budget": 4000
+   "model": "deepseek-v4-flash-0731",
+   "arm": "high effort",
+   "score": 0.6080096175249694,
+   "+-": null,
+   "tok/answer": 21624.75
   },
   {
    "model": "deepseek-v4-flash-0731",
-   "comparison": "low -> high effort",
-   "from": 0.5453786889657857,
-   "to": 0.48156706578781594,
-   "lift": -0.06381162317796969,
-   "lift +-": 0.0287945527419431,
-   "tok/answer": 12444.333333333334,
-   "budget": 12000
+   "arm": "high effort + skill:ml-debug",
+   "score": 0.5660997148651108,
+   "+-": 0.036221265830095016,
+   "tok/answer": 24115.666666666668
   }
  ],
  "fits": {
@@ -1200,66 +1194,70 @@
     "off_topic": 0.0103,
     "gold": 0.9901,
     "gap": 0.98,
-    "leniency": 0.006,
-    "judgments": 421
+    "leniency": 0.005,
+    "judgments": 591
    },
    "openai/gpt-oss-120b": {
     "off_topic": -0.0158,
     "gold": 0.9962,
     "gap": 1.012,
-    "leniency": 0.069,
-    "judgments": 361
+    "leniency": 0.076,
+    "judgments": 530
    },
    "qwen/qwen3.7-flash": {
     "off_topic": -0.0037,
     "gold": 0.9923,
     "gap": 0.996,
-    "leniency": -0.014,
-    "judgments": 397
+    "leniency": -0.017,
+    "judgments": 567
    },
    "thinkingmachines/inkling-small": {
     "off_topic": -0.02,
     "gold": 0.9877,
     "gap": 1.008,
-    "leniency": -0.012,
-    "judgments": 433
+    "leniency": -0.017,
+    "judgments": 603
    }
   },
   "disagreement": {
-   "sd": 0.124,
-   "judgments_per_row": 54,
+   "sd": 0.142,
+   "judgments_per_row": 66,
    "se": 0.017
   },
   "dropout": {
    "deepseek-v4-flash-0731": 0.012,
    "deepseek-v4-flash-0731 (budget:12000)": 0.012,
    "deepseek-v4-flash-0731 (effort:high budget:12000)": 0.012,
+   "deepseek-v4-flash-0731 (effort:high budget:24000)": 0.012,
    "deepseek-v4-flash-0731 (skill:ml-debug budget:12000)": 0.012,
+   "deepseek-v4-flash-0731 (skill:ml-debug effort:high budget:12000)": 0.012,
+   "deepseek-v4-flash-0731 (skill:ml-debug effort:high budget:24000)": 0.012,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v1 effort:high budget:24000)": 0.012,
    "deepseek-v4-flash-vision-exp": 0.012,
    "deepseek-v4-pro-0813": 0.012,
    "gemini-3.6-flash": -0.001,
    "gemini-3.7-flash": -0.001,
-   "gpt-4": -0.017,
-   "gpt-5.5": -0.017,
-   "gpt-5.6-luna": -0.017,
-   "gpt-5.6-sol": -0.017,
-   "gpt-5.6-terra": -0.017,
-   "gpt-oss-120b": -0.017,
-   "o1": -0.017,
+   "gpt-4": -0.019,
+   "gpt-5.5": -0.019,
+   "gpt-5.6-luna": -0.019,
+   "gpt-5.6-sol": -0.019,
+   "gpt-5.6-terra": -0.019,
+   "gpt-oss-120b": -0.019,
+   "o1": -0.019,
    "qwen3.5-27b": 0.004,
    "qwen3.5-9b": 0.004,
    "qwen3.6-27b": 0.004,
    "qwen3.8-max": 0.004,
-   "inkling": 0.003
+   "inkling": 0.004
   }
  },
  "uncertainty": {
   "model": "deepseek-v4-flash-0731 (budget:12000)",
-  "draws": 2,
-  "total": 0.081,
+  "draws": 3,
+  "total": 0.08,
   "parts": {
-   "between questions": 0.071,
-   "between answers": 0.036,
+   "between questions": 0.073,
+   "between answers": 0.029,
    "between judges": 0.017
   }
  },
