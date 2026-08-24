@@ -40,7 +40,7 @@ means a model has to work the answer out rather than recall it. Code and numbers
 | deepseek-v4-flash-vision-exp   |             +0.49 | ±0.082 | 12/12                  |           1 |   $0.041 |                       4,978 |                       8 |                       +0.69 |                            -0.08 |                        +0.35 |                +0.06 |                 +0.76 |                     +0.91 |                 +0.64 |                  +0.63 |                  +0.34 |                         +0.51 |                           +0.52 |                 +0.57 |
 | inkling                        |             +0.48 | ±0.076 | 12/12                  |           1 |   $0.044 |                         745 |                  **54** |                       +0.73 |                            -0.06 |                        +0.25 |                +0.20 |                 +0.92 |                     +0.60 |                 +0.59 |                  +0.51 |                  +0.46 |                         +0.45 |                           +0.42 |                 +0.71 |
 | qwen3.6-27b                    |             +0.46 | ±0.080 | 12/12                  |           1 |    $0.24 |                       6,038 |                       6 |                       +0.24 |                            -0.04 |                        +0.34 |                +0.17 |                 +0.86 |                     +0.97 |                 +0.58 |                  +0.45 |                  +0.53 |                         +0.49 |                           +0.53 |                 +0.45 |
-| deepseek-v4-flash-0731         |             +0.46 | ±0.080 | 12/12                  |           1 |   $0.019 |                       5,062 |                       8 |                       +0.42 |                            -0.03 |                        +0.53 |                +0.15 |                 +0.84 |                     +0.94 |                 +0.69 |                  +0.28 |                  +0.43 |                         +0.27 |                           +0.46 |                 +0.57 |
+| deepseek-v4-flash-0731         |             +0.46 | ±0.080 | 12/12                  |           1 |  $0.0090 |                       5,062 |                       8 |                       +0.42 |                            -0.03 |                        +0.53 |                +0.15 |                 +0.84 |                     +0.94 |                 +0.69 |                  +0.28 |                  +0.43 |                         +0.27 |                           +0.46 |                 +0.57 |
 | glm-5.1                        |             +0.43 | ±0.077 | 12/12                  |           1 |    $0.18 |                       4,681 |                       8 |                       +0.23 |                            -0.01 |                        +0.31 |                +0.04 |                 +0.74 |                     +0.74 |                 +0.58 |                  +0.27 |                  +0.49 |                         +0.78 |                           +0.49 |                 +0.57 |
 | claude-haiku-4.5               |             +0.43 | ±0.083 | 12/12                  |           1 |   $0.089 |                       1,350 |                      27 |                       +0.72 |                            -0.07 |                        +0.34 |                +0.04 |                 +0.13 |                     +0.77 |                 +0.51 |                  +0.50 |                  +0.76 |                         +0.28 |                           +0.64 |                 +0.58 |
 | qwen3.5-27b                    |             +0.42 | ±0.072 | 12/12                  |           1 |    $0.11 |                       5,664 |                       6 |                       +0.33 |                            +0.01 |                        +0.28 |                +0.04 |                 +0.80 |                     +0.67 |                 +0.58 |                  +0.28 |                  +0.61 |                         +0.44 |                           +0.39 |                 +0.66 |
@@ -58,13 +58,10 @@ qualifies. Eval version 97.
 
 ## How is ML capability uplifted with a skill or method?
 
-| model                  | variant                                                |   score |   lift |   lift +- |   tok/answer |
-|:-----------------------|:-------------------------------------------------------|--------:|-------:|----------:|-------------:|
-| grok-4.6               | effort:high                                            |   +0.64 | +0.078 |     0.028 |         6788 |
-| grok-4.6               | effort:lowest listed (default)                         |   +0.56 |        |           |         1169 |
-| deepseek-v4-flash-0731 | effort:lowest listed (default)                         |   +0.46 |        |           |         5062 |
-| deepseek-v4-flash-0731 | effort:high                                            |   +0.46 | -0.007 |     0.032 |         5215 |
-| deepseek-v4-flash-0731 | [skill:ml-debug](https://github.com/wassname/ml-debug) |   +0.41 | -0.051 |     0.050 |         5765 |
+| model                  | comparison         |   from |    to |   lift |   lift +- |   tok/answer |   budget |
+|:-----------------------|:-------------------|-------:|------:|-------:|----------:|-------------:|---------:|
+| grok-4.6               | low -> high effort |  +0.56 | +0.64 | +0.078 |     0.028 |         6788 |     4000 |
+| deepseek-v4-flash-0731 | low -> high effort |  +0.52 | +0.48 | -0.039 |     0.045 |        12444 |    12000 |
 
 How much does a skill or higher effort increase a model's score? Each row is the same model on the
 same 12 questions with one thing changed. `lift` is against the default row, paired by
@@ -80,6 +77,8 @@ When will a model be as good as me (wassname)? <!-- -- wassname -->
 
 claude-fable-5 refuses questions its provider blocks, 3 of 12 in at least one draw. The 3 it never answered (AP#1, OL#6, SV#8). Those cells take claude-opus-5's score, shown in italic. The row then measures a pair of models, and $/run counts only its own tokens.
 
+What the `+-` bar is made of, measured on deepseek-v4-flash-0731 (budget:12000) over 2 answers to each question, in row units and added in quadrature: between questions 0.080, between answers 0.029, between judges 0.017. They come to 0.087, against 0.091 on a single answer, and that row's own `+-` of 0.091, which is the spread of its 12 cells, is the other way of measuring the same bar. Only the middle part shrinks with more answers; the first needs more questions.
+
 ### The judges
 
 We use multiple judges. To avoid bias each judge is read through its own two anchors, so a point
@@ -92,8 +91,8 @@ be one).
 
 | judge                           |   judgments |   off-topic |   gold |    gap |   leniency |
 |:--------------------------------|------------:|------------:|-------:|-------:|-----------:|
-| openai/gpt-oss-120b             |         327 |      -0.016 | +0.996 | +1.012 |     +0.073 |
-| google/gemma-4-31b-it           |         387 |      +0.010 | +0.990 | +0.980 |     +0.007 |
-| qwen/qwen3.7-flash              |         363 |      -0.004 | +0.992 | +0.996 |     -0.014 |
-| thinkingmachines/inkling-small  |         399 |      -0.020 | +0.988 | +1.008 |     -0.018 |
+| openai/gpt-oss-120b             |         351 |      -0.016 | +0.996 | +1.012 |     +0.069 |
+| google/gemma-4-31b-it           |         411 |      +0.010 | +0.990 | +0.980 |     +0.006 |
+| thinkingmachines/inkling-small  |         423 |      -0.020 | +0.988 | +1.008 |     -0.014 |
+| qwen/qwen3.7-flash              |         387 |      -0.004 | +0.992 | +0.996 |     -0.014 |
 | deepseek/deepseek-v4-flash-0731 |         341 |      -0.008 | +0.997 | +1.005 |     -0.048 |

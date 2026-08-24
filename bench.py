@@ -128,6 +128,10 @@ JUDGE_TEMPERATURE = 0.7
 # models (median 997 tokens) and the 30x spread in output is all thinking, so this bounds thinking
 # and `FINAL_ANSWER_MAX_TOKENS` leaves the answer its own room
 # (scripts/scratch/answer_vs_thinking.py). Nothing is forced to spend it.
+# Not every provider honours it as a thinking cap. deepseek stops dead at it, x-ai does not count
+# reasoning against it at all: grok-4.6 logged out=13,674 reasoning=13,193 stop_reason=stop under
+# this value (docs/audits/job_3.md). So it is a requested budget, and a cross-provider token
+# comparison has to read the logged reasoning tokens, not this number.
 ANSWER_MAX_TOKENS = 4_000
 # The continuation turn writes prose, not thinking, so it needs room for the longest answer the
 # bench has seen. Measured over 572 logged answers: prose alone is median 997 tokens, p99 4436,
@@ -1253,7 +1257,7 @@ def _variant(log) -> str:
     if scope == f"effort:{EFFORT_FLOOR.get(log.eval.model)}":
         return log.eval.model
     return (f"{log.eval.model} ({scope})"
-            if scope.startswith(("skill:", "effort:")) else log.eval.model)
+            if scope.startswith(("skill:", "effort:", "budget:")) else log.eval.model)
 
 
 def _draw_of(log) -> int:
@@ -1284,42 +1288,63 @@ def _short_variant(variant: str) -> str:
 
 # A row label carrying a variant, `deepseek-v4-flash-0731 (effort:high)`. `(with fallback)` is not
 # a variant: that row is still the bare model, reading a sibling's score where its provider refused.
-_VARIANT_LABEL = re.compile(r" \((skill|effort):")
+_VARIANT_LABEL = re.compile(r" \((skill|effort|budget):")
 
 
 # A reader cannot judge a skill's lift without reading the skill, so the label links to it.
 _SKILL_LINK = {"skill:ml-debug": "[skill:ml-debug](https://github.com/wassname/ml-debug)"}
 
 
-def _uplift(variants: list[dict], base: list[dict], items: list[str]) -> list[dict]:
-    """One row per variant of a model, its default row first, so the table reads down.
+def _arm_scope(row: dict) -> dict:
+    """The three knobs an arm can differ on, read back out of its row label."""
+    scope = dict(effort=EFFORT_ARM, budget=ANSWER_MAX_TOKENS, skill=None)
+    for token in row["model"].partition(" (")[2].rstrip(")").split():
+        key, _, value = token.partition(":")
+        scope[key] = int(value) if key == "budget" else value
+    return scope
 
-    The default is a variant too, and it carries the effort every other row in the report ran at.
-    `lift` is against that row, paired by question over the 12 both answered. Never paired by draw:
-    the draw index is a cache scope, not a seed, so draw 3 of one variant is not the partner of
-    draw 3 of the other, and the pairing chosen would decide the sign (AGENTS.md 6).
+
+def _pair(a: dict, b: dict, items: list[str]) -> dict:
+    """b against a, paired by question over the 12 both answered.
+
+    Never paired by draw: the draw index is a cache scope, not a seed, so draw 3 of one arm is not
+    the partner of draw 3 of the other, and the pairing chosen would decide the sign (AGENTS.md 6).
     """
-    bare_of = {row["model"]: row for row in base}
-    groups = []
-    for model in {v["model"].partition(" (")[0] for v in variants}:
-        bare = bare_of[model]
-        rows = [{"model": model, "variant": f"effort:{EFFORT_ARM} (default)",
-                 "score": bare["score"], "lift": None, "lift +-": None,
-                 "tok/answer": bare["tok/answer"]}]
-        for v in variants:
-            name, _, scope = v["model"].partition(" (")
-            if name != model:
-                continue
-            diffs = [v[i] - bare[i] for i in items]
-            rows.append({"model": model, "variant": _SKILL_LINK.get(scope.rstrip(")"),
-                                                                    scope.rstrip(")")),
-                         "score": v["score"],
-                         "lift": statistics.mean(diffs),
-                         "lift +-": statistics.stdev(diffs) / math.sqrt(len(diffs)),
-                         "tok/answer": v["tok/answer"]})
-        # Best score first, inside a model and between models, so the table reads like the main one.
-        groups.append(sorted(rows, key=lambda row: -row["score"]))
-    return [row for group in sorted(groups, key=lambda g: -g[0]["score"]) for row in group]
+    diffs = [b[i] - a[i] for i in items]
+    return {"from": a["score"], "to": b["score"], "lift": statistics.mean(diffs),
+            "lift +-": statistics.stdev(diffs) / math.sqrt(len(diffs)),
+            "tok/answer": b["tok/answer"]}
+
+
+def _uplift(variants: list[dict], base: list[dict], items: list[str]) -> list[dict]:
+    """One row per comparison, two per model: the reasoning rung, then a skill on top of it.
+
+    Every comparison holds the other two knobs fixed, so a row is one changed thing. Both arms are
+    read at the largest budget where both exist, because a document read under a budget the model
+    was already spending on thinking measures crowding rather than the document
+    (logs_capbound/README.md).
+    """
+    arms = [(row, _arm_scope(row)) for row in variants + base]
+    rows = []
+    for model in {row["model"].partition(" (")[0] for row, _ in arms}:
+        mine = [(row, s) for row, s in arms if row["model"].partition(" (")[0] == model
+                and row["score"] is not None]
+        for label, low, high in (
+            ("low -> high effort",
+             dict(skill=None, effort=EFFORT_ARM), dict(skill=None, effort="high")),
+            ("high effort + skill:ml-debug",
+             dict(skill=None, effort="high"), dict(skill="ml-debug", effort="high")),
+        ):
+            # The largest budget carrying both sides of this comparison, so the two arms match.
+            for budget in sorted({s["budget"] for _, s in mine}, reverse=True):
+                def side(want, budget=budget):
+                    return [row for row, s in mine if s["budget"] == budget
+                            and all(s[k] == v for k, v in want.items())]
+                if side(low) and side(high):
+                    rows.append({"model": model, "comparison": label,
+                                 **_pair(side(low)[0], side(high)[0], items), "budget": budget})
+                    break
+    return sorted(rows, key=lambda row: -row["lift"])
 
 
 def _per_answer(tokens: int | None, n_items: int) -> float | None:
@@ -1351,7 +1376,7 @@ def _ktok_text(row: dict) -> str:
     if row["tok/answer"] is None:
         return "tokens unknown, answers served from cache"
     share = row.get("reasoning share")
-    return (f"{row['tok/answer']:,.0f} tokens per answer, reasoning included, against a "
+    return (f"{row['tok/answer']:,.0f} tokens per answer, reasoning included, against a requested "
             f"{ANSWER_MAX_TOKENS:,}-token thinking budget"
             + (f"<br>reasoning effort '{EFFORT_ARM}', and "
                f"{share:.0%} of the output was reasoning" if share is not None else ""))
@@ -1774,8 +1799,10 @@ def _results(log_dir: str, judge: str) -> None:
                                "comparable, so the score stays blank, unless a fallback model "
                                "fills the refused questions"),
         **{"tok/answer": ("AGENTS.md", f"tokens the model generated for one answer, reasoning "
-                                       f"included, against a {ANSWER_MAX_TOKENS:,}-token thinking "
-                                       f"budget")},
+                                       f"included. Every model is asked for a "
+                                       f"{ANSWER_MAX_TOKENS:,}-token thinking budget, and a row "
+                                       f"far above it is a provider that does not count reasoning "
+                                       f"against the cap")},
         **{"pts/Mtok": ("AGENTS.md", "score per million tokens. A model that writes more for "
                                      "the same score ranks lower")},
     )
@@ -1783,11 +1810,12 @@ def _results(log_dir: str, judge: str) -> None:
     # docs/page.md.j2, which is the one file to edit. -- CLAUDE
     tables = {"main": to_markdown(gt)}
     lifts = _uplift(variants, table, items)
-    # Six columns, because this table is read on a phone. Score to 2 decimals like the main table.
-    # The lift and its bar keep 3: the smallest lift here is 0.013 and rounding it to 0.01 would
-    # hide whether it beat its own bar.
+    # Seven columns, because this table is read on a phone. Scores to 2 decimals like the main
+    # table. The lift and its bar keep 3: the smallest lift here is 0.013 and rounding it to 0.01
+    # would hide whether it beat its own bar.
     tables["uplift"] = tabulate(lifts, headers="keys", tablefmt="pipe", missingval="",
-                                floatfmt=("", "", "+.2f", "+.3f", ".3f", ".0f")) if lifts else ""
+                                floatfmt=("", "", "+.2f", "+.2f", "+.3f", ".3f", ".0f", ",.0f")
+                                ) if lifts else ""
     # Three charts against numbers this bench did not produce: two public tests, and the calendar.
     suffix = _report_suffix(judge)
     index_png, index_fit = _versus(table, "index", suffix)
