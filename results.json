@@ -901,7 +901,48 @@
    "VJ#12": -0.12205732728837251
   }
  ],
- "uplift": [],
+ "uplift": [
+  {
+   "model": "grok-4.6",
+   "variant": "effort:high",
+   "score": 0.6417620990137496,
+   "lift": 0.07814321229270492,
+   "lift +-": 0.027831687475363003,
+   "tok/answer": 6788.333333333333
+  },
+  {
+   "model": "grok-4.6",
+   "variant": "effort:lowest listed (default)",
+   "score": 0.5636188867210447,
+   "lift": null,
+   "lift +-": null,
+   "tok/answer": 1169.3333333333333
+  },
+  {
+   "model": "deepseek-v4-flash-0731",
+   "variant": "effort:lowest listed (default)",
+   "score": 0.46313557154610335,
+   "lift": null,
+   "lift +-": null,
+   "tok/answer": 5062.416666666667
+  },
+  {
+   "model": "deepseek-v4-flash-0731",
+   "variant": "effort:high",
+   "score": 0.4563910405222,
+   "lift": -0.006744531023903374,
+   "lift +-": 0.0319146497312168,
+   "tok/answer": 5214.583333333333
+  },
+  {
+   "model": "deepseek-v4-flash-0731",
+   "variant": "[skill:ml-debug](https://github.com/wassname/ml-debug)",
+   "score": 0.41168814729518566,
+   "lift": -0.05144742425091773,
+   "lift +-": 0.049600694339573426,
+   "tok/answer": 5765.0
+  }
+ ],
  "fits": {
   "index": {
    "slope": 0.010852377278469608,
@@ -1172,47 +1213,49 @@
     "off_topic": -0.0076,
     "gold": 0.997,
     "gap": 1.005,
-    "leniency": -0.053,
-    "judgments": 329
+    "leniency": -0.048,
+    "judgments": 341
    },
    "google/gemma-4-31b-it": {
     "off_topic": 0.0103,
     "gold": 0.9901,
     "gap": 0.98,
     "leniency": 0.007,
-    "judgments": 351
+    "judgments": 387
    },
    "openai/gpt-oss-120b": {
     "off_topic": -0.0158,
     "gold": 0.9962,
     "gap": 1.012,
-    "leniency": 0.071,
-    "judgments": 291
+    "leniency": 0.073,
+    "judgments": 327
    },
    "qwen/qwen3.7-flash": {
     "off_topic": -0.0037,
     "gold": 0.9923,
     "gap": 0.996,
-    "leniency": -0.012,
-    "judgments": 327
+    "leniency": -0.014,
+    "judgments": 363
    },
    "thinkingmachines/inkling-small": {
     "off_topic": -0.02,
     "gold": 0.9877,
     "gap": 1.008,
-    "leniency": -0.014,
-    "judgments": 363
+    "leniency": -0.018,
+    "judgments": 399
    }
   },
   "disagreement": {
-   "sd": 0.119,
+   "sd": 0.12,
    "judgments_per_row": 52,
    "se": 0.017
   },
   "dropout": {
-   "deepseek-v4-flash-0731": 0.013,
-   "deepseek-v4-flash-vision-exp": 0.013,
-   "deepseek-v4-pro-0813": 0.013,
+   "deepseek-v4-flash-0731": 0.012,
+   "deepseek-v4-flash-0731 (effort:high)": 0.012,
+   "deepseek-v4-flash-0731 (skill:ml-debug)": 0.012,
+   "deepseek-v4-flash-vision-exp": 0.012,
+   "deepseek-v4-pro-0813": 0.012,
    "gemini-3.6-flash": -0.002,
    "gemini-3.7-flash": -0.002,
    "gpt-4": -0.018,
@@ -1222,11 +1265,11 @@
    "gpt-5.6-terra": -0.018,
    "gpt-oss-120b": -0.018,
    "o1": -0.018,
-   "qwen3.5-27b": 0.003,
-   "qwen3.5-9b": 0.003,
-   "qwen3.6-27b": 0.003,
-   "qwen3.8-max": 0.003,
-   "inkling": 0.003
+   "qwen3.5-27b": 0.004,
+   "qwen3.5-9b": 0.004,
+   "qwen3.6-27b": 0.004,
+   "qwen3.8-max": 0.004,
+   "inkling": 0.004
   }
  },
  "uncertainty": null,

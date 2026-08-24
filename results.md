@@ -55,6 +55,20 @@ means a model has to work the answer out rather than recall it. Code and numbers
 used to mark the best value and every cell within one error bar of it. A * marks a question the model
 refused. Every model answers at reasoning effort 'lowest listed', which the note under the table
 qualifies. Eval version 97.
+
+## How is ML capability uplifted with a skill or method?
+
+| model                  | variant                                                |   score |   lift |   lift +- |   tok/answer |
+|:-----------------------|:-------------------------------------------------------|--------:|-------:|----------:|-------------:|
+| grok-4.6               | effort:high                                            |   +0.64 | +0.078 |     0.028 |         6788 |
+| grok-4.6               | effort:lowest listed (default)                         |   +0.56 |        |           |         1169 |
+| deepseek-v4-flash-0731 | effort:lowest listed (default)                         |   +0.46 |        |           |         5062 |
+| deepseek-v4-flash-0731 | effort:high                                            |   +0.46 | -0.007 |     0.032 |         5215 |
+| deepseek-v4-flash-0731 | [skill:ml-debug](https://github.com/wassname/ml-debug) |   +0.41 | -0.051 |     0.050 |         5765 |
+
+How much does a skill or higher effort increase a model's score? Each row is the same model on the
+same 12 questions with one thing changed. `lift` is against the default row, paired by
+question, so a lift is real only when it beats `lift +-`.
  
 ## Score vs release date
 
@@ -78,8 +92,8 @@ be one).
 
 | judge                           |   judgments |   off-topic |   gold |    gap |   leniency |
 |:--------------------------------|------------:|------------:|-------:|-------:|-----------:|
-| openai/gpt-oss-120b             |         291 |      -0.016 | +0.996 | +1.012 |     +0.071 |
-| google/gemma-4-31b-it           |         351 |      +0.010 | +0.990 | +0.980 |     +0.007 |
-| qwen/qwen3.7-flash              |         327 |      -0.004 | +0.992 | +0.996 |     -0.012 |
-| thinkingmachines/inkling-small  |         363 |      -0.020 | +0.988 | +1.008 |     -0.014 |
-| deepseek/deepseek-v4-flash-0731 |         329 |      -0.008 | +0.997 | +1.005 |     -0.053 |
+| openai/gpt-oss-120b             |         327 |      -0.016 | +0.996 | +1.012 |     +0.073 |
+| google/gemma-4-31b-it           |         387 |      +0.010 | +0.990 | +0.980 |     +0.007 |
+| qwen/qwen3.7-flash              |         363 |      -0.004 | +0.992 | +0.996 |     -0.014 |
+| thinkingmachines/inkling-small  |         399 |      -0.020 | +0.988 | +1.008 |     -0.018 |
+| deepseek/deepseek-v4-flash-0731 |         341 |      -0.008 | +0.997 | +1.005 |     -0.048 |
