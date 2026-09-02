@@ -230,6 +230,8 @@ MODELS = {
         "openrouter/meta/muse-spark-1.2",
         "openrouter/google/gemini-3.6-flash",
         "openrouter/google/gemini-3.7-flash",
+        "openrouter/meta/muse-spark-1.3",
+        "openrouter/google/gemini-3.8-flash",
         "openrouter/x-ai/grok-4.6",
         "openrouter/qwen/qwen3.8-max",
         "openrouter/moonshotai/kimi-k3",
@@ -2248,6 +2250,7 @@ RELEASED = {
     "deepseek-v4-flash-0731": "2026-07-31", "qwen3.8-max": "2026-08-03",
     "muse-spark-1.2": "2026-08-05", "grok-4.6": "2026-08-12", "gemini-3.7-flash": "2026-08-13",
     "deepseek-v4-pro-0813": "2026-08-13", "qwen3.8-27b": "2026-08-14",
+    "muse-spark-1.3": "2026-09-02", "gemini-3.8-flash": "2026-09-02",
     # OpenRouter's own created field, 1787086655.
     "glm-5.3": "2026-08-18",
     # Same, for the two AA does not list: 1787256295 and 1787311563.
@@ -2454,8 +2457,9 @@ def _pareto(table: list[dict], x: str = "$/run", suffix: str = "",
             f"{r['model']} ({EFFORT_ARM})<br>{r['company']}"
             f"<br>score {r['score']:+.2f}"
             + (f"<br>{r['fallback']}" if r.get("fallback") else "")
-            + f"<br>${r['$/run']:.3g} per run"
-              f"<br>{_ktok_text(r)}"
+            + (f"<br>${r['$/run']:.3g} per run" if r["$/run"] is not None
+               else "<br>cost unavailable")
+              + f"<br>{_ktok_text(r)}"
             for r in plotted
         ],
         hovertemplate="%{hovertext}<extra></extra>",

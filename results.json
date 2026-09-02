@@ -263,6 +263,35 @@
    "VJ#12": 0.8935967585225323
   },
   {
+   "model": "gemini-3.8-flash",
+   "company": "Google",
+   "fallback": null,
+   "score": 0.676791220002776,
+   "+-": 0.078,
+   "answered": "12/12",
+   "answers/q": 1,
+   "$/run": 0.06328275,
+   "tok/answer": 1277.0833333333333,
+   "pts/Mtok": 44.162559217146885,
+   "reasoning share": null,
+   "full": "google/gemini-3.8-flash",
+   "index": null,
+   "hle": null,
+   "released": "2026-09-02",
+   "AP#1": 0.6221379299856179,
+   "CW#2": 0.027991520669987918,
+   "KL#3": 0.5470985249190379,
+   "MC#4": 0.8113121201324387,
+   "NP#5": 0.9859315965077453,
+   "OL#6": 1.041847388327571,
+   "PC#7": 0.7934585572790154,
+   "SV#8": 0.7658570769228716,
+   "TR#9": 0.45908591142519384,
+   "TS#10": 0.6116504266317746,
+   "VG#11": 0.5886944877371293,
+   "VJ#12": 0.8664290994949291
+  },
+  {
    "model": "muse-spark-1.2",
    "company": "Meta",
    "fallback": null,
@@ -290,6 +319,35 @@
    "TS#10": 0.7730843875974689,
    "VG#11": 0.6850373140069145,
    "VJ#12": 1.0073564488336522
+  },
+  {
+   "model": "muse-spark-1.3",
+   "company": "Meta",
+   "fallback": null,
+   "score": 0.6644487771235209,
+   "+-": 0.071,
+   "answered": "12/12",
+   "answers/q": 1,
+   "$/run": 0.0807355,
+   "tok/answer": 1405.9166666666667,
+   "pts/Mtok": 39.38407783317651,
+   "reasoning share": 0.3837354039476024,
+   "full": "meta/muse-spark-1.3",
+   "index": null,
+   "hle": null,
+   "released": "2026-09-02",
+   "AP#1": 0.6625806963547501,
+   "CW#2": 0.6086769473059574,
+   "KL#3": 0.5073972762464926,
+   "MC#4": 0.15010393613212097,
+   "NP#5": 1.0073564488336522,
+   "OL#6": 1.056763563458158,
+   "PC#7": 0.5499204475671527,
+   "SV#8": 0.8200978828000735,
+   "TR#9": 0.5878199894904087,
+   "TS#10": 0.636426031061021,
+   "VG#11": 0.5284754556149194,
+   "VJ#12": 0.8577666506175439
   },
   {
    "model": "gemini-3.7-flash",
@@ -560,7 +618,7 @@
    "+-": 0.067,
    "answered": "12/12",
    "answers/q": 1,
-   "$/run": 0.2178922746,
+   "$/run": 0.12893034,
    "tok/answer": 5026.5,
    "pts/Mtok": 8.62563688691281,
    "reasoning share": 0.7789714513080672,
@@ -1217,41 +1275,41 @@
     "gold": 0.997,
     "gap": 1.005,
     "leniency": -0.045,
-    "judgments": 703
+    "judgments": 727
    },
    "google/gemma-4-31b-it": {
     "off_topic": 0.0103,
     "gold": 0.9901,
     "gap": 0.98,
     "leniency": -0.001,
-    "judgments": 1646
+    "judgments": 1658
    },
    "openai/gpt-oss-120b": {
     "off_topic": -0.0158,
     "gold": 0.9962,
     "gap": 1.012,
     "leniency": 0.065,
-    "judgments": 1560
+    "judgments": 1584
    },
    "qwen/qwen3.7-flash": {
     "off_topic": -0.0037,
     "gold": 0.9923,
     "gap": 0.996,
     "leniency": -0.019,
-    "judgments": 1549
+    "judgments": 1573
    },
    "thinkingmachines/inkling-small": {
     "off_topic": -0.02,
     "gold": 0.9877,
     "gap": 1.008,
     "leniency": -0.0,
-    "judgments": 1656
+    "judgments": 1680
    }
   },
   "disagreement": {
-   "sd": 0.164,
-   "judgments_per_row": 113,
-   "se": 0.015
+   "sd": 0.163,
+   "judgments_per_row": 111,
+   "se": 0.016
   },
   "dropout": {
    "deepseek-v4-flash-0731": 0.011,
@@ -1409,6 +1467,13 @@
   }
  ],
  "borrowed": {
+  "claude-fable-5.1": {
+   "from": "claude-opus-5",
+   "items": [
+    "VG#11"
+   ],
+   "refused": 1
+  },
   "claude-fable-5": {
    "from": "claude-opus-5",
    "items": [
@@ -1417,13 +1482,6 @@
     "SV#8"
    ],
    "refused": 3
-  },
-  "claude-fable-5.1": {
-   "from": "claude-opus-5",
-   "items": [
-    "VG#11"
-   ],
-   "refused": 1
   }
  }
 }
