@@ -270,7 +270,7 @@
    "+-": 0.06,
    "answered": "12/12",
    "answers/q": 1,
-   "$/run": 0.031011375,
+   "$/run": 0.06202275,
    "tok/answer": 1249.0833333333333,
    "pts/Mtok": 43.909584302168525,
    "reasoning share": 0.08786443391820668,
@@ -357,14 +357,14 @@
    "+-": 0.088,
    "answered": "12/12",
    "answers/q": 1,
-   "$/run": 0.0,
+   "$/run": null,
    "tok/answer": 1240.25,
    "pts/Mtok": 42.16674150428899,
    "reasoning share": null,
    "full": "stealth/ox-alpha",
    "index": null,
    "hle": null,
-   "released": "2026-08-20",
+   "released": null,
    "AP#1": 0.5896092091552483,
    "CW#2": -0.04581817759085519,
    "KL#3": 0.6036163665647312,
@@ -531,7 +531,7 @@
    "+-": 0.067,
    "answered": "12/12",
    "answers/q": 1,
-   "$/run": 0.21918157800000002,
+   "$/run": 0.2178922746,
    "tok/answer": 5026.5,
    "pts/Mtok": 8.62563688691281,
    "reasoning share": 0.7789714513080672,
@@ -618,7 +618,7 @@
    "+-": 0.08,
    "answered": "12/12",
    "answers/q": 1,
-   "$/run": 0.23660927999999998,
+   "$/run": 0.2697576,
    "tok/answer": 6037.666666666667,
    "pts/Mtok": 6.392531961252138,
    "reasoning share": 0.5986032131618175,
@@ -647,7 +647,7 @@
    "+-": 0.08,
    "answered": "12/12",
    "answers/q": 1,
-   "$/run": 0.009031642199999999,
+   "$/run": 0.011959285,
    "tok/answer": 5062.416666666667,
    "pts/Mtok": 7.623756301274151,
    "reasoning share": 0.7772802844491268,
@@ -1187,78 +1187,92 @@
     "off_topic": -0.0076,
     "gold": 0.997,
     "gap": 1.005,
-    "leniency": -0.048,
-    "judgments": 341
+    "leniency": -0.045,
+    "judgments": 703
    },
    "google/gemma-4-31b-it": {
     "off_topic": 0.0103,
     "gold": 0.9901,
     "gap": 0.98,
-    "leniency": 0.005,
-    "judgments": 591
+    "leniency": -0.001,
+    "judgments": 1646
    },
    "openai/gpt-oss-120b": {
     "off_topic": -0.0158,
     "gold": 0.9962,
     "gap": 1.012,
-    "leniency": 0.076,
-    "judgments": 530
+    "leniency": 0.065,
+    "judgments": 1560
    },
    "qwen/qwen3.7-flash": {
     "off_topic": -0.0037,
     "gold": 0.9923,
     "gap": 0.996,
-    "leniency": -0.017,
-    "judgments": 567
+    "leniency": -0.019,
+    "judgments": 1549
    },
    "thinkingmachines/inkling-small": {
     "off_topic": -0.02,
     "gold": 0.9877,
     "gap": 1.008,
-    "leniency": -0.017,
-    "judgments": 603
+    "leniency": -0.0,
+    "judgments": 1656
    }
   },
   "disagreement": {
-   "sd": 0.142,
-   "judgments_per_row": 66,
-   "se": 0.017
+   "sd": 0.164,
+   "judgments_per_row": 113,
+   "se": 0.015
   },
   "dropout": {
-   "deepseek-v4-flash-0731": 0.012,
-   "deepseek-v4-flash-0731 (budget:12000)": 0.012,
-   "deepseek-v4-flash-0731 (effort:high budget:12000)": 0.012,
-   "deepseek-v4-flash-0731 (effort:high budget:24000)": 0.012,
-   "deepseek-v4-flash-0731 (skill:ml-debug budget:12000)": 0.012,
-   "deepseek-v4-flash-0731 (skill:ml-debug effort:high budget:12000)": 0.012,
-   "deepseek-v4-flash-0731 (skill:ml-debug effort:high budget:24000)": 0.012,
-   "deepseek-v4-flash-0731 (skill:ml-debug-v1 effort:high budget:24000)": 0.012,
-   "deepseek-v4-flash-vision-exp": 0.012,
-   "deepseek-v4-pro-0813": 0.012,
-   "gemini-3.6-flash": -0.001,
-   "gemini-3.7-flash": -0.001,
-   "gpt-4": -0.019,
-   "gpt-5.5": -0.019,
-   "gpt-5.6-luna": -0.019,
-   "gpt-5.6-sol": -0.019,
-   "gpt-5.6-terra": -0.019,
-   "gpt-oss-120b": -0.019,
-   "o1": -0.019,
-   "qwen3.5-27b": 0.004,
-   "qwen3.5-9b": 0.004,
-   "qwen3.6-27b": 0.004,
-   "qwen3.8-max": 0.004,
-   "inkling": 0.004
+   "deepseek-v4-flash-0731": 0.011,
+   "deepseek-v4-flash-0731 (budget:12000)": 0.011,
+   "deepseek-v4-flash-0731 (effort:high budget:12000)": 0.011,
+   "deepseek-v4-flash-0731 (effort:high budget:24000)": 0.011,
+   "deepseek-v4-flash-0731 (effort:high budget:64000)": 0.011,
+   "deepseek-v4-flash-0731 (skill:ml-debug budget:12000)": 0.011,
+   "deepseek-v4-flash-0731 (skill:ml-debug effort:high budget:12000)": 0.011,
+   "deepseek-v4-flash-0731 (skill:ml-debug effort:high budget:24000)": 0.011,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v1 effort:high budget:24000)": 0.011,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v1 effort:high budget:64000)": 0.011,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v1:loaded effort:high budget:64000)": 0.011,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v2 effort:high budget:64000)": 0.011,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v2:loaded effort:high budget:64000)": 0.011,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v3 effort:high budget:64000)": 0.011,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v3:loaded effort:high budget:64000)": 0.011,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v4 effort:high budget:64000)": 0.011,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v4:loaded effort:high budget:64000)": 0.011,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v5 effort:high budget:64000)": 0.011,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v5:loaded effort:high budget:64000)": 0.011,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v6:loaded effort:high budget:64000)": 0.011,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v7:loaded effort:high budget:64000)": 0.011,
+   "deepseek-v4-flash-vision-exp": 0.011,
+   "deepseek-v4-pro-0813": 0.011,
+   "gpt-4": -0.016,
+   "gpt-5.5": -0.016,
+   "gpt-5.6-luna": -0.016,
+   "gpt-5.6-sol": -0.016,
+   "gpt-5.6-terra": -0.016,
+   "gpt-5.6-terra (effort:high budget:64000)": -0.016,
+   "gpt-5.6-terra (skill:ml-debug-v5:loaded effort:high budget:64000)": -0.016,
+   "gpt-oss-120b": -0.016,
+   "o1": -0.016,
+   "qwen3.5-27b": 0.005,
+   "qwen3.5-9b": 0.005,
+   "qwen3.5-9b (effort:high budget:64000)": 0.005,
+   "qwen3.5-9b (skill:ml-debug-v5:loaded effort:high budget:64000)": 0.005,
+   "qwen3.6-27b": 0.005,
+   "qwen3.8-max": 0.005
   }
  },
  "uncertainty": {
-  "model": "deepseek-v4-flash-0731 (budget:12000)",
-  "draws": 3,
-  "total": 0.08,
+  "model": "deepseek-v4-flash-0731 (skill:ml-debug-v2 effort:high budget:64000)",
+  "draws": 5,
+  "total": 0.071,
   "parts": {
-   "between questions": 0.073,
-   "between answers": 0.029,
-   "between judges": 0.017
+   "between questions": 0.066,
+   "between answers": 0.021,
+   "between judges": 0.015
   }
  },
  "unanswered": [
@@ -1279,6 +1293,48 @@
    "question": "SV#8",
    "draw": 1,
    "why": "refused 3/3 attempts. refusal: This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback."
+  },
+  {
+   "model": "claude-fable-5.1",
+   "question": "VG#11",
+   "draw": 1,
+   "why": "refused 3/3 attempts. refusal: API integrators: you can reduce refusals for your users by configuring a fallback model \u2014 see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback"
+  },
+  {
+   "model": "deepseek-v4-flash-0731 (skill:ml-debug-v2:loaded effort:high budget:64000)",
+   "question": "TR#9",
+   "draw": 4,
+   "why": "empty answer"
+  },
+  {
+   "model": "deepseek-v4-flash-0731 (skill:ml-debug-v3:loaded effort:high budget:64000)",
+   "question": "TR#9",
+   "draw": 4,
+   "why": "empty answer"
+  },
+  {
+   "model": "deepseek-v4-flash-0731 (skill:ml-debug-v4 effort:high budget:64000)",
+   "question": "TS#10",
+   "draw": 2,
+   "why": "empty answer"
+  },
+  {
+   "model": "deepseek-v4-flash-0731 (skill:ml-debug-v5 effort:high budget:64000)",
+   "question": "CW#2",
+   "draw": 4,
+   "why": "empty answer"
+  },
+  {
+   "model": "deepseek-v4-flash-0731 (skill:ml-debug-v5:loaded effort:high budget:64000)",
+   "question": "AP#1",
+   "draw": 3,
+   "why": "empty answer"
+  },
+  {
+   "model": "deepseek-v4-flash-0731 (skill:ml-debug-v5:loaded effort:high budget:64000)",
+   "question": "TS#10",
+   "draw": 3,
+   "why": "empty answer"
   },
   {
    "model": "minimax-m3",
@@ -1313,6 +1369,12 @@
   {
    "model": "minimax-m3",
    "question": "VJ#12",
+   "draw": 1,
+   "why": "we truncated it: the answer hit ANSWER_MAX_TOKENS (4,000) with no text out"
+  },
+  {
+   "model": "qwen3.5-9b (skill:ml-debug-v5:loaded effort:high budget:64000)",
+   "question": "NP#5",
    "draw": 1,
    "why": "we truncated it: the answer hit ANSWER_MAX_TOKENS (4,000) with no text out"
   }

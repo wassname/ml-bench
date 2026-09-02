@@ -1599,6 +1599,9 @@ def _latest_logs(log_dir: str, judge: str | None = None):
     return [logs[i] for i in keep]
 
 
+FALLBACK_MODELS = {"claude-fable-5"}
+
+
 def _borrow(rows: dict[str, dict[str, float]], refused: set[tuple[str, str]],
             n_items: int) -> dict[str, tuple[str, set[str]]]:
     """A row whose provider blocked a question reads a sibling's score there.
@@ -1612,6 +1615,8 @@ def _borrow(rows: dict[str, dict[str, float]], refused: set[tuple[str, str]],
                 for model, scores in rows.items() if len(scores) == n_items}
     borrowed: dict[str, tuple[str, set[str]]] = {}
     for model, scores in rows.items():
+        if _short_variant(model) not in FALLBACK_MODELS:
+            continue
         gaps = {item for name, item in refused if name == _short_variant(model)} - set(scores)
         company = _company(_model_of(model).replace("openrouter/", ""))
         donors = sorted((mean, donor) for donor, mean in complete.items()
