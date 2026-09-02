@@ -60,33 +60,33 @@
    "VJ#12": 0.9137550673276259
   },
   {
-   "model": "claude-fable-5 (with fallback)",
+   "model": "claude-fable-5",
    "company": "Anthropic",
-   "fallback": "with fallback to claude-opus-5 for 3/12 refused questions",
-   "score": 0.7921475347201096,
-   "+-": 0.047,
-   "answered": "9/12",
+   "fallback": null,
+   "score": 0.7980983180868141,
+   "+-": 0.083,
+   "answered": "12/12",
    "answers/q": 1,
    "$/run": 0.9761866666666666,
    "tok/answer": 1444.3333333333333,
-   "pts/Mtok": 45.70433502885469,
+   "pts/Mtok": 46.047675864690405,
    "reasoning share": 0.19647665205015769,
    "full": "anthropic/claude-fable-5",
    "index": 62,
    "hle": 55.5,
    "released": "2026-06-09",
-   "AP#1": 0.7345989192436797,
-   "CW#2": 0.7949687869041889,
-   "KL#3": 0.706694023568487,
-   "MC#4": 0.7224409428414396,
-   "NP#5": 0.8912338527594448,
+   "AP#1": 0.698666472244039,
+   "CW#2": 0.02055687285016193,
+   "KL#3": 0.8298125404920621,
+   "MC#4": 0.8355323303349492,
+   "NP#5": 1.0073564488336522,
    "OL#6": 1.056763563458158,
-   "PC#7": 0.6927496931692205,
-   "SV#8": 0.6699362529340663,
-   "TR#9": 1.1366080757302,
-   "TS#10": 0.6661074516586988,
+   "PC#7": 0.7925830447294296,
+   "SV#8": 0.9564532530416737,
+   "TR#9": 1.0569743906814244,
+   "TS#10": 0.700668729856375,
    "VG#11": 0.6144557216861917,
-   "VJ#12": 0.8192131326875393
+   "VJ#12": 1.0073564488336522
   },
   {
    "model": "gpt-5.6-sol",
@@ -270,7 +270,7 @@
    "+-": 0.06,
    "answered": "12/12",
    "answers/q": 1,
-   "$/run": 0.031011375,
+   "$/run": 0.06202275,
    "tok/answer": 1249.0833333333333,
    "pts/Mtok": 43.909584302168525,
    "reasoning share": 0.08786443391820668,
@@ -357,14 +357,14 @@
    "+-": 0.088,
    "answered": "12/12",
    "answers/q": 1,
-   "$/run": 0.0,
+   "$/run": null,
    "tok/answer": 1240.25,
    "pts/Mtok": 42.16674150428899,
    "reasoning share": null,
    "full": "stealth/ox-alpha",
    "index": null,
    "hle": null,
-   "released": "2026-08-20",
+   "released": null,
    "AP#1": 0.5896092091552483,
    "CW#2": -0.04581817759085519,
    "KL#3": 0.6036163665647312,
@@ -531,7 +531,7 @@
    "+-": 0.067,
    "answered": "12/12",
    "answers/q": 1,
-   "$/run": 0.21918157800000002,
+   "$/run": 0.2178922746,
    "tok/answer": 5026.5,
    "pts/Mtok": 8.62563688691281,
    "reasoning share": 0.7789714513080672,
@@ -560,7 +560,7 @@
    "+-": 0.082,
    "answered": "12/12",
    "answers/q": 1,
-   "$/run": 0.04128872,
+   "$/run": 0.08257744,
    "tok/answer": 4978.083333333333,
    "pts/Mtok": 8.249922170347823,
    "reasoning share": 0.7662252875102533,
@@ -618,7 +618,7 @@
    "+-": 0.08,
    "answered": "12/12",
    "answers/q": 1,
-   "$/run": 0.23660927999999998,
+   "$/run": 0.2697576,
    "tok/answer": 6037.666666666667,
    "pts/Mtok": 6.392531961252138,
    "reasoning share": 0.5986032131618175,
@@ -647,7 +647,7 @@
    "+-": 0.08,
    "answered": "12/12",
    "answers/q": 1,
-   "$/run": 0.009031642199999999,
+   "$/run": 0.011959285,
    "tok/answer": 5062.416666666667,
    "pts/Mtok": 7.623756301274151,
    "reasoning share": 0.7772802844491268,
@@ -919,46 +919,46 @@
  ],
  "fits": {
   "index": {
-   "slope": 0.010852377278469608,
-   "intercept": 0.04305019632136528,
+   "slope": 0.010873332609037927,
+   "intercept": 0.04223452997329468,
    "log": false,
-   "sd": 0.08878352242445416,
-   "r": 0.8260776598844989,
+   "sd": 0.08900382963897041,
+   "r": 0.8259335200103762,
    "n": 26,
    "mean": 49.84615384615385,
    "sxx": 3451.3846153846152,
    "resid": [
-    0.1218307195222319,
-    0.13893617782977397,
-    0.07624994713362854,
-    0.0567101643089023,
-    0.08842994299950235,
-    0.08620270876168512,
-    -0.00942556828907215,
-    0.014287572150385897,
-    0.007377435189540704,
-    0.045995398531541554,
-    0.027121438981053236,
-    -0.031675619048309955,
-    -0.042357340637142915,
-    -0.08400521809297556,
-    0.0715060527450938,
-    -0.14142632358696672,
-    -0.09794502633544766,
-    -0.016586052569531995,
-    0.007711192753429519,
-    -0.14423824325568163,
-    -0.05331292863610232,
-    0.06170580594558339,
-    0.0015466384052346682,
-    -0.2042090374753993,
-    0.09135865991454212,
-    -0.07178849724549599
+    0.12132620004449834,
+    0.13855739033545034,
+    0.08171716635316795,
+    0.05624755549230542,
+    0.08805115550517872,
+    0.08584487659792994,
+    -0.009867221775100687,
+    0.013908784656062267,
+    0.007019603025785526,
+    0.04572138769005962,
+    0.026847428139571305,
+    -0.032033451212065134,
+    -0.042694217470329865,
+    -0.08440496091786742,
+    0.07142063987872671,
+    -0.1418889324035636,
+    -0.09823999250749793,
+    -0.016650510105330807,
+    0.00773055653990401,
+    -0.14451225409716356,
+    -0.053356430841332736,
+    0.061892812376604434,
+    0.0016288681834140672,
+    -0.20450400364744958,
+    0.09167139832897314,
+    -0.0714338481699284
    ],
    "models": [
     "claude-opus-5",
     "gpt-5.6-terra",
-    "claude-fable-5 (with fallback)",
+    "claude-fable-5",
     "gpt-5.6-sol",
     "claude-opus-4.8",
     "gpt-5.5",
@@ -986,57 +986,57 @@
    "reach": null,
    "worst": {
     "model": "glm-5.2",
-    "resid": -0.2042090374753993
+    "resid": -0.20450400364744958
    },
    "best": {
     "model": "gpt-5.6-terra",
-    "resid": 0.13893617782977397
+    "resid": 0.13855739033545034
    },
-   "per_year": 3.9638308009610244,
+   "per_year": 3.971484735451103,
    "half": null,
    "reach_month": null
   },
   "hle": {
-   "slope": 0.01119821881743936,
-   "intercept": 0.1541170713679187,
+   "slope": 0.011227960577520646,
+   "intercept": 0.15320420723828693,
    "log": false,
-   "sd": 0.08324934069836162,
-   "r": 0.8489781835733079,
+   "sd": 0.08330631517367845,
+   "r": 0.8494442575924561,
    "n": 26,
    "mean": 38.388461538461534,
    "sxx": 3423.706538461538,
    "resid": [
-    0.07968139994184298,
-    0.1660512203878397,
-    0.01652931898430643,
-    0.053326471785746676,
-    0.05059531641641968,
-    0.06999053947070721,
-    0.005453730834644954,
-    0.012287245783109357,
-    -0.03235099361805993,
-    0.04236481421388205,
-    0.03804853912606487,
-    -0.013173310005226035,
-    -0.01902990252811343,
-    -0.04715762013818414,
-    0.027314988890148384,
-    -0.07090177191502256,
-    -0.09296287713812557,
-    -0.029076262196677416,
-    0.050355799605872,
-    -0.12323274617497465,
-    -0.05649872167032649,
-    0.15974877355174893,
-    0.002675538368316799,
-    -0.2003467101598212,
-    0.021263750729447917,
-    -0.11095653254556445
+    0.07896144144301209,
+    0.16568816300998424,
+    0.02174229879613121,
+    0.05276711879135476,
+    0.050059756830092894,
+    0.06954123098861609,
+    0.004971706416464494,
+    0.011846859829042433,
+    -0.032862759796321805,
+    0.04206421453219733,
+    0.03778660373248577,
+    -0.01353041903106511,
+    -0.019345373089838747,
+    -0.04752365169204764,
+    0.02716607218487832,
+    -0.07126482929287803,
+    -0.09326942517182657,
+    -0.02911216021363866,
+    0.050581629077626034,
+    -0.12346791398448059,
+    -0.05648108451914147,
+    0.16035232337653532,
+    0.0028775744320058694,
+    -0.20065623236953023,
+    0.021593676361486458,
+    -0.11048682064114387
    ],
    "models": [
     "claude-opus-5",
     "gpt-5.6-terra",
-    "claude-fable-5 (with fallback)",
+    "claude-fable-5",
     "gpt-5.6-sol",
     "claude-opus-4.8",
     "gpt-5.5",
@@ -1064,30 +1064,30 @@
    "reach": null,
    "worst": {
     "model": "glm-5.2",
-    "resid": -0.2003467101598212
+    "resid": -0.20065623236953023
    },
    "best": {
     "model": "gpt-5.6-terra",
-    "resid": 0.1660512203878397
+    "resid": 0.16568816300998424
    },
-   "per_year": 4.090149423069726,
+   "per_year": 4.101012600939416,
    "half": null,
    "reach_month": null
   },
   "released": {
-   "slope": 0.0007364388523679214,
-   "intercept": -544.8936724684609,
+   "slope": 0.0007380251632035872,
+   "intercept": -546.0656682681722,
    "log": true,
-   "sd": 0.01733352362500602,
-   "r": 0.9993933151801208,
+   "sd": 0.016718413911168278,
+   "r": 0.9994379955763351,
    "n": 4,
    "mean": 739330.75,
    "sxx": 912308.75,
    "resid": [
-    -0.009598074917775201,
-    0.02095207843009489,
-    -0.004044097599691154,
-    -0.0073099059127585825
+    -0.009240354253378436,
+    0.020307250646364128,
+    -0.005488426044481853,
+    -0.005578470347896269
    ],
    "models": [
     "gpt-4",
@@ -1095,17 +1095,17 @@
     "gpt-5.5",
     "claude-fable-5"
    ],
-   "reach": "2026-10-14",
+   "reach": "2026-10-12",
    "worst": {
     "model": "gpt-4",
-    "resid": -0.009598074917775201
+    "resid": -0.009240354253378436
    },
    "best": {
     "model": "o1",
-    "resid": 0.02095207843009489
+    "resid": 0.020307250646364128
    },
    "per_year": null,
-   "half": 13.429631659366878,
+   "half": 13.40076601726901,
    "reach_month": "October 2026"
   }
  },
@@ -1187,98 +1187,130 @@
     "off_topic": -0.0076,
     "gold": 0.997,
     "gap": 1.005,
-    "leniency": -0.048,
-    "judgments": 341
+    "leniency": -0.047,
+    "judgments": 696
    },
    "google/gemma-4-31b-it": {
     "off_topic": 0.0103,
     "gold": 0.9901,
     "gap": 0.98,
-    "leniency": 0.005,
-    "judgments": 591
+    "leniency": -0.001,
+    "judgments": 1638
    },
    "openai/gpt-oss-120b": {
     "off_topic": -0.0158,
     "gold": 0.9962,
     "gap": 1.012,
-    "leniency": 0.076,
-    "judgments": 530
+    "leniency": 0.066,
+    "judgments": 1552
    },
    "qwen/qwen3.7-flash": {
     "off_topic": -0.0037,
     "gold": 0.9923,
     "gap": 0.996,
-    "leniency": -0.017,
-    "judgments": 567
+    "leniency": -0.018,
+    "judgments": 1541
    },
    "thinkingmachines/inkling-small": {
     "off_topic": -0.02,
     "gold": 0.9877,
     "gap": 1.008,
-    "leniency": -0.017,
-    "judgments": 603
+    "leniency": -0.0,
+    "judgments": 1648
    }
   },
   "disagreement": {
-   "sd": 0.142,
-   "judgments_per_row": 66,
-   "se": 0.017
+   "sd": 0.165,
+   "judgments_per_row": 114,
+   "se": 0.015
   },
   "dropout": {
    "deepseek-v4-flash-0731": 0.012,
    "deepseek-v4-flash-0731 (budget:12000)": 0.012,
    "deepseek-v4-flash-0731 (effort:high budget:12000)": 0.012,
    "deepseek-v4-flash-0731 (effort:high budget:24000)": 0.012,
+   "deepseek-v4-flash-0731 (effort:high budget:64000)": 0.012,
    "deepseek-v4-flash-0731 (skill:ml-debug budget:12000)": 0.012,
    "deepseek-v4-flash-0731 (skill:ml-debug effort:high budget:12000)": 0.012,
    "deepseek-v4-flash-0731 (skill:ml-debug effort:high budget:24000)": 0.012,
    "deepseek-v4-flash-0731 (skill:ml-debug-v1 effort:high budget:24000)": 0.012,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v1 effort:high budget:64000)": 0.012,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v1:loaded effort:high budget:64000)": 0.012,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v2 effort:high budget:64000)": 0.012,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v2:loaded effort:high budget:64000)": 0.012,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v3 effort:high budget:64000)": 0.012,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v3:loaded effort:high budget:64000)": 0.012,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v4 effort:high budget:64000)": 0.012,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v4:loaded effort:high budget:64000)": 0.012,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v5 effort:high budget:64000)": 0.012,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v5:loaded effort:high budget:64000)": 0.012,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v6:loaded effort:high budget:64000)": 0.012,
+   "deepseek-v4-flash-0731 (skill:ml-debug-v7:loaded effort:high budget:64000)": 0.012,
    "deepseek-v4-flash-vision-exp": 0.012,
    "deepseek-v4-pro-0813": 0.012,
-   "gemini-3.6-flash": -0.001,
-   "gemini-3.7-flash": -0.001,
-   "gpt-4": -0.019,
-   "gpt-5.5": -0.019,
-   "gpt-5.6-luna": -0.019,
-   "gpt-5.6-sol": -0.019,
-   "gpt-5.6-terra": -0.019,
-   "gpt-oss-120b": -0.019,
-   "o1": -0.019,
-   "qwen3.5-27b": 0.004,
-   "qwen3.5-9b": 0.004,
-   "qwen3.6-27b": 0.004,
-   "qwen3.8-max": 0.004,
-   "inkling": 0.004
+   "gpt-4": -0.017,
+   "gpt-5.5": -0.017,
+   "gpt-5.6-luna": -0.017,
+   "gpt-5.6-sol": -0.017,
+   "gpt-5.6-terra": -0.017,
+   "gpt-5.6-terra (effort:high budget:64000)": -0.017,
+   "gpt-5.6-terra (skill:ml-debug-v5:loaded effort:high budget:64000)": -0.017,
+   "gpt-oss-120b": -0.017,
+   "o1": -0.017,
+   "qwen3.5-27b": 0.005,
+   "qwen3.5-9b": 0.005,
+   "qwen3.5-9b (effort:high budget:64000)": 0.005,
+   "qwen3.5-9b (skill:ml-debug-v5:loaded effort:high budget:64000)": 0.005,
+   "qwen3.6-27b": 0.005,
+   "qwen3.8-max": 0.005
   }
  },
  "uncertainty": {
-  "model": "deepseek-v4-flash-0731 (budget:12000)",
-  "draws": 3,
-  "total": 0.08,
+  "model": "deepseek-v4-flash-0731 (skill:ml-debug-v2 effort:high budget:64000)",
+  "draws": 5,
+  "total": 0.071,
   "parts": {
-   "between questions": 0.073,
-   "between answers": 0.029,
-   "between judges": 0.017
+   "between questions": 0.066,
+   "between answers": 0.021,
+   "between judges": 0.015
   }
  },
  "unanswered": [
   {
-   "model": "claude-fable-5",
+   "model": "deepseek-v4-flash-0731 (skill:ml-debug-v2:loaded effort:high budget:64000)",
+   "question": "TR#9",
+   "draw": 4,
+   "why": "empty answer"
+  },
+  {
+   "model": "deepseek-v4-flash-0731 (skill:ml-debug-v3:loaded effort:high budget:64000)",
+   "question": "TR#9",
+   "draw": 4,
+   "why": "empty answer"
+  },
+  {
+   "model": "deepseek-v4-flash-0731 (skill:ml-debug-v4 effort:high budget:64000)",
+   "question": "TS#10",
+   "draw": 2,
+   "why": "empty answer"
+  },
+  {
+   "model": "deepseek-v4-flash-0731 (skill:ml-debug-v5 effort:high budget:64000)",
+   "question": "CW#2",
+   "draw": 4,
+   "why": "empty answer"
+  },
+  {
+   "model": "deepseek-v4-flash-0731 (skill:ml-debug-v5:loaded effort:high budget:64000)",
    "question": "AP#1",
-   "draw": 1,
-   "why": "refused 3/3 attempts. no refusal text, native_finish_reason=max_tokens"
+   "draw": 3,
+   "why": "empty answer"
   },
   {
-   "model": "claude-fable-5",
-   "question": "OL#6",
-   "draw": 1,
-   "why": "refused 3/3 attempts. no refusal text, native_finish_reason=max_tokens"
-  },
-  {
-   "model": "claude-fable-5",
-   "question": "SV#8",
-   "draw": 1,
-   "why": "refused 3/3 attempts. refusal: This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback."
+   "model": "deepseek-v4-flash-0731 (skill:ml-debug-v5:loaded effort:high budget:64000)",
+   "question": "TS#10",
+   "draw": 3,
+   "why": "empty answer"
   },
   {
    "model": "minimax-m3",
@@ -1315,17 +1347,13 @@
    "question": "VJ#12",
    "draw": 1,
    "why": "we truncated it: the answer hit ANSWER_MAX_TOKENS (4,000) with no text out"
+  },
+  {
+   "model": "qwen3.5-9b (skill:ml-debug-v5:loaded effort:high budget:64000)",
+   "question": "NP#5",
+   "draw": 1,
+   "why": "we truncated it: the answer hit ANSWER_MAX_TOKENS (4,000) with no text out"
   }
  ],
- "borrowed": {
-  "claude-fable-5": {
-   "from": "claude-opus-5",
-   "items": [
-    "AP#1",
-    "OL#6",
-    "SV#8"
-   ],
-   "refused": 3
-  }
- }
+ "borrowed": {}
 }
