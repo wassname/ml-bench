@@ -6,7 +6,6 @@ A small private benchmark of twelve machine learning research questions from
 derive the answer rather than recall it.
 
 - Results and charts: [results.md](results.md), or the page at https://wassname.github.io/ml-bench/
-- Latest separate 15-question result: [Claude Fable 5, 2026-09-02](history/2026-09-02_fable-v102.md)
 - Harness: [bench.py](bench.py), the same file that runs the scored runs
 - Code: https://github.com/wassname/ml-bench
 
