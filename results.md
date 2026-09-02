@@ -56,6 +56,14 @@ used to mark the best value and every cell within one error bar of it. A * marks
 refused. Every model answers at reasoning effort 'lowest listed', which the note under the table
 qualifies. Eval version 97.
 
+## Latest run: Claude Fable 5
+
+| model | eval version | score↑ | +- | answered | candidate $ | judges $ | total $ |
+|:--|:--|--:|:--|:--|--:|--:|--:|
+| claude-fable-5 | v102 | +0.77 | ±0.065 | 15/15 | $1.47 | $0.28 | $1.75 |
+
+V102 has fifteen questions; the main table above is v97 with twelve. [Full result](history/2026-09-02_fable-v102.md).
+
 ## How is ML capability uplifted with a skill or method?
 
 | model                  | arm                          |    score↑ | +-     |   tok/answer |
