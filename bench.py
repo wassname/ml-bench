@@ -1599,7 +1599,7 @@ def _latest_logs(log_dir: str, judge: str | None = None):
     return [logs[i] for i in keep]
 
 
-FALLBACK_MODELS = {"claude-fable-5"}
+FALLBACK_MODELS = {"claude-fable-5", "claude-fable-5.1"}
 
 
 def _borrow(rows: dict[str, dict[str, float]], refused: set[tuple[str, str]],

@@ -2,6 +2,35 @@
  "version": "v97",
  "rows": [
   {
+   "model": "claude-fable-5.1 (with fallback)",
+   "company": "Anthropic",
+   "fallback": "with fallback to claude-opus-5 for 1/12 refused questions",
+   "score": 0.8508910612035238,
+   "+-": 0.05,
+   "answered": "11/12",
+   "answers/q": 1,
+   "$/run": 1.9721672727272725,
+   "tok/answer": 3033.181818181818,
+   "pts/Mtok": 23.37729575213238,
+   "reasoning share": 0.439352615015735,
+   "full": "anthropic/claude-fable-5.1",
+   "index": null,
+   "hle": null,
+   "released": null,
+   "AP#1": 0.7163440817117337,
+   "CW#2": 0.7813197378576361,
+   "KL#3": 0.5837441650820206,
+   "MC#4": 0.8645655665371302,
+   "NP#5": 1.0569743906814244,
+   "OL#6": 1.1077943860750188,
+   "PC#7": 0.7651305124142884,
+   "SV#8": 0.8832163802990615,
+   "TR#9": 0.9670969430477991,
+   "TS#10": 0.8130764583685566,
+   "VG#11": 0.6144557216861917,
+   "VJ#12": 1.0569743906814244
+  },
+  {
    "model": "claude-opus-5",
    "company": "Anthropic",
    "fallback": null,
@@ -1388,6 +1417,13 @@
     "SV#8"
    ],
    "refused": 3
+  },
+  "claude-fable-5.1": {
+   "from": "claude-opus-5",
+   "items": [
+    "VG#11"
+   ],
+   "refused": 1
   }
  }
 }
