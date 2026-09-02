@@ -60,7 +60,14 @@ ITEMS = Path(__file__).parent / "items"
 # the request. The effort arm is each model's lowest listed rung instead of a global "minimal" that
 # 28 of the 32 models do not have and silently replaced with their own default. And the answer
 # budget is 4000 tokens with a continuation turn, equal for every model, instead of 40,000.
-RUBRIC_VERSION = "v97"
+# v98: one new item, the first that ships a real artifact instead of prose. The other 12 are
+# unchanged, but the set is 13 now, so a v97 table and a v98 table are not the same bench. -- CLAUDE
+# v99: two more items.
+# v100: `beyond_reference` now needs a base score of 1.0 to pay out, which is what "above the
+# reference" means. It was a flat +0.5 on any score and fired on excluded alternatives.
+# v101: setup repairs from reading the v100 reasoning traces.
+# v102: a glossary named the wrong steer axis, which the run's own config line contradicts.
+RUBRIC_VERSION = "v102"
 # Stamped on every chart, so an image that travels without the page keeps its source.
 SITE_URL = "wassname.github.io/ml-bench"
 # A panel, one company each, because judge choice moves a score more than sampling does. Measured
@@ -226,6 +233,7 @@ MODELS = {
         "openrouter/deepseek/deepseek-v4-pro-0813",
         "openrouter/z-ai/glm-5.2",
         "openrouter/z-ai/glm-5.3",
+        "openrouter/z-ai/glm-5.3-flash",
         "openrouter/meta/muse-spark-1.2",
         "openrouter/google/gemini-3.6-flash",
         "openrouter/google/gemini-3.7-flash",
@@ -240,9 +248,8 @@ MODELS = {
         "openrouter/anthropic/claude-fable-5",
         "openrouter/anthropic/claude-haiku-4.5",
         "openrouter/thinkingmachines/inkling",
-        # An unnamed lab's model behind OpenRouter's stealth slug, free while it is cloaked, and a
-        # DeepSeek experimental. Neither is on Artificial Analysis, so both sit out the index fits.
-        "openrouter/stealth/ox-alpha",
+        # This Flash model and the DeepSeek experimental model are not on Artificial Analysis, so
+        # both sit out the index fits.
         "openrouter/deepseek/deepseek-v4-flash-vision-exp",
     ],
 }
@@ -599,15 +606,33 @@ Now the question.
 
 """
 
+# The permission line above is why every skill arm scored null: on 2026-08-25 the candidate named
+# the document's exercises in its reasoning on 11 of 12 questions and declined them on 11 of 12.
+# This header measures the document's content instead of the model's willingness to opt in.
+FOLLOW_HEADER = """Load your ml-debug skill and use it on this task.
 
-def bench_dataset(pattern: str = "*.md", skill: str | None = None) -> MemoryDataset:
+<skill name="ml-debug">
+{text}
+</skill>
+
+The skill is now loaded. Follow it. Do not quote it back at me.
+
+Now the task.
+
+"""
+
+
+def bench_dataset(pattern: str = "*.md", skill: str | None = None,
+                  follow: bool = False) -> MemoryDataset:
     """The candidate sees the prompt only. The gold answer rides in metadata for the judge.
 
     `skill` is a markdown file prepended to every question, which makes an uplift variant: the same
     model with a reference document open. Its answers cache under their own scope, so the variant
-    and the bare model never serve each other's answers.
+    and the bare model never serve each other's answers. `follow` swaps the header that offers the
+    document for the one that orders it.
     """
-    prefix = SKILL_HEADER.format(text=Path(skill).read_text()) if skill else ""
+    header = FOLLOW_HEADER if follow else SKILL_HEADER
+    prefix = header.format(text=Path(skill).read_text()) if skill else ""
     return MemoryDataset([
         Sample(
             id=item["id"],
@@ -671,19 +696,20 @@ def _shared_quotes(grades: list, rubric: list[dict], answer: str) -> list[str]:
     Pass rubric + traps: one span that both earns a point and fires a trap is the loudest
     version of this, and it means the trap is catching the legitimate neighbour.
 
-    Nesting counts. Exact string equality missed three real double-charges in one round, where
-    the judge quoted a sentence for one id and a prefix of it for another.
+    Compare line sets, not the joined quote text. "3,11" and "3,21" both rest on line 3 but
+    neither joined string contains the other, which hid 4 of 7 real overlaps in the v99 round.
     """
     shared = []
     for grade in grades:
-        credited = [(point["id"], " ".join(cited_lines(
-                        answer, getattr(grade, point["id"]).lines).split()))
-                    for point in rubric
-                    if getattr(grade, point["id"]).score > 0
-                    and cited_lines(answer, getattr(grade, point["id"]).lines)]
+        credited = []
+        for point in rubric:
+            check = getattr(grade, point["id"])
+            if check.score > 0 and cited_lines(answer, check.lines):
+                credited.append((point["id"], {n for first, last in LINES.findall(check.lines)
+                                               for n in range(int(first), int(last or first) + 1)}))
         for i, (point_id, span) in enumerate(credited):
             for other_id, other in credited[i + 1:]:
-                if span in other or other in span:
+                if span & other:
                     shared.append(f"{point_id} + {other_id}")
     return sorted(set(shared))
 
@@ -900,11 +926,14 @@ def rubric_judge(panel: tuple[str, ...] | Model = JUDGE_PANEL, passes: int = JUD
             def one(point_id: str) -> float:
                 return credit(point_id, getattr(grade, point_id), [])
 
-            return ((sum(p["weight"] * one(p["id"]) for p in rubric)
-                     - sum(p["weight"] * one(p["id"]) for p in traps)) / total
-                    + BEYOND_WEIGHT * one(BEYOND_ID))
+            base = ((sum(p["weight"] * one(p["id"]) for p in rubric)
+                     - sum(p["weight"] * one(p["id"]) for p in traps)) / total)
+            # Headroom above the reference, so it needs an answer that reached the reference.
+            # Added unconditionally it lifted a 0.444 answer to 0.944 although the same judge
+            # said that answer did not diagnose the failure.
+            return base + BEYOND_WEIGHT * one(BEYOND_ID) * (base >= 1.0)
 
-        shared = _shared_quotes(grades, rubric + traps, answer)
+        shared = _shared_quotes(grades, rubric + traps + [{"id": BEYOND_ID}], answer)
         lost = sum(p["weight"] * rate(p["id"]) for p in traps)
         beyond = BEYOND_WEIGHT * rate(BEYOND_ID)
         # Each judge's own score, put on the shared scale, then averaged. Averaging the raw scores
@@ -1132,6 +1161,8 @@ def wassname_ml_bench(
     epochs: int = 1,
     cache_scope: str | None = None,
     skill: str | None = None,
+    # Swap the header that offers the document for one that loads it as a skill and orders it.
+    follow: bool = False,
     draw: int = 1,
     provider: dict | None = None,
     max_tokens: int = ANSWER_MAX_TOKENS,
@@ -1144,12 +1175,13 @@ def wassname_ml_bench(
     # cached answer with the bare model.
     # A non-default answer budget is a variant for the same reason: an answer written under a
     # thinking budget is a different answer, and without this it would replay the 40k cache.
-    variant = ([f"skill:{Path(skill).parent.name}"] if skill else []) + (
+    variant = ([f"skill:{Path(skill).parent.name}" + (":loaded" if follow else "")]
+               if skill else []) + (
         [] if effort_label is None else [f"effort:{effort_label}"]) + (
         [] if max_tokens == ANSWER_MAX_TOKENS else [f"budget:{max_tokens}"])
     cache_scope = cache_scope or " ".join(variant) or None
     return Task(
-        dataset=bench_dataset(items, skill),
+        dataset=bench_dataset(items, skill, follow),
         solver=generate_tolerating_content_filter(quiet),
         scorer=rubric_judge(judge_model, judge_passes, judge_temperature, judge_max_tokens),
         epochs=Epochs(epochs, "mean"),
@@ -1708,7 +1740,10 @@ def _results(log_dir: str, judge: str) -> None:
     # columns are blank. The row and its per-item scores stay, because how it did on the questions
     # it did answer is still worth seeing.
     incomplete = {model: len(scores) for model, scores in rows.items() if len(scores) < n_items}
-    items = sorted({item for scores in rows.values() for item in scores})
+    items = sorted(
+        {item for scores in rows.values() for item in scores},
+        key=lambda item: int(_SHORT_ITEM[item][0].split("#")[1]),
+    )
     # An exploratory or open item scores agreement with wassname, not correctness: its gold answer
     # is a current best guess, and for VG#11 the hypothesis came out null. Pooling
     # those into one mean would report agreement as if it were skill.
@@ -1851,35 +1886,37 @@ def _results(log_dir: str, judge: str) -> None:
             lift_gt, lifts, {"score": statistics.median(bars) if bars else 0.0}, score="up"))
     else:
         tables["uplift"] = ""
-    # Three charts against numbers this bench did not produce: two public tests, and the calendar.
+    # A comparison fit needs three complete rows. Until then, publish the measured row without a
+    # chart that would imply a trend.
+    comparable = sum(row["score"] is not None for row in table) >= 3
     suffix = _report_suffix(judge)
-    index_png, index_fit = _versus(table, "index", suffix)
-    hle_png, hle_fit = _versus(table, "hle", suffix)
-    time_png, time_fit = _versus(table, "released", suffix)
-    # Which row the line misses worst, and best, on each public number. Two of the three sections
-    # are about that row, so it is measured once here and named in the template.
-    for name, fit in (("index", index_fit), ("hle", hle_fit), ("released", time_fit)):
-        low, high = min(zip(fit["resid"], fit["models"])), max(zip(fit["resid"], fit["models"]))
-        fit["worst"] = {"model": low[1], "resid": low[0]}
-        fit["best"] = {"model": high[1], "resid": high[0]}
-        # A log fit's slope is a rate, so it reports a doubling time and not a score per year.
-        fit["per_year"] = None if fit["log"] else fit["slope"] * 365.25
-        fit["half"] = _doubling_months(fit) if fit["log"] else None
-        fit["reach_month"] = f"{date.fromisoformat(fit['reach']):%B %Y}" if fit["reach"] else None
-    below = index_fit["worst"]["model"]
-    # The uplift table holds the one measurement that tests the effort story on the worst row, so
-    # the two sections have to point at each other or a reader has to find it. -- CLAUDE
-    lifted = [row for row in lifts if row["model"] == below and row["lift"] is not None
-              and row["variant"].startswith("effort:")]
-    effort_test = None
-    if lifted:
-        predicted = float(_fit_at(index_fit, PUBLIC_INDEX[below])[0])
-        effort_test = {"variant": lifted[0]["variant"], "score": lifted[0]["score"],
-                       "predicted": predicted, "after": lifted[0]["score"] - predicted}
-    # What the other choices of fit would have said, so the caveats in the text are measured.
-    alt = _timeline_alts(table)
-    alt["first_when"] = f"{alt['first_when']:%b %Y}"
-    alt["all_reach_month"] = f"{alt['all_reach']:%b %Y}" if alt["all_reach"] else None
+    if comparable:
+        index_png, index_fit = _versus(table, "index", suffix)
+        hle_png, hle_fit = _versus(table, "hle", suffix)
+        time_png, time_fit = _versus(table, "released", suffix)
+        for fit in (index_fit, hle_fit, time_fit):
+            low, high = min(zip(fit["resid"], fit["models"])), max(zip(fit["resid"], fit["models"]))
+            fit["worst"] = {"model": low[1], "resid": low[0]}
+            fit["best"] = {"model": high[1], "resid": high[0]}
+            fit["per_year"] = None if fit["log"] else fit["slope"] * 365.25
+            fit["half"] = _doubling_months(fit) if fit["log"] else None
+            fit["reach_month"] = f"{date.fromisoformat(fit['reach']):%B %Y}" if fit["reach"] else None
+        below = index_fit["worst"]["model"]
+        lifted = [row for row in lifts if row["model"] == below and row["lift"] is not None
+                  and row["variant"].startswith("effort:")]
+        effort_test = None
+        if lifted:
+            predicted = float(_fit_at(index_fit, PUBLIC_INDEX[below])[0])
+            effort_test = {"variant": lifted[0]["variant"], "score": lifted[0]["score"],
+                           "predicted": predicted, "after": lifted[0]["score"] - predicted}
+        alt = _timeline_alts(table)
+        alt["first_when"] = f"{alt['first_when']:%b %Y}"
+        alt["all_reach_month"] = f"{alt['all_reach']:%b %Y}" if alt["all_reach"] else None
+    else:
+        index_png = hle_png = time_png = None
+        index_fit = hle_fit = time_fit = None
+        effort_test = None
+        alt = {}
     # Two different counts, and one sentence holding both read as a contradiction: "4 of 12 here.
     # The 1 it never answered". A refusal is stochastic, so with several draws a question can be
     # blocked in one draw and answered in another, and only a question blocked in every draw leaves
@@ -1927,9 +1964,9 @@ def _results(log_dir: str, judge: str) -> None:
         }
     else:
         notes["bar"] = None
-    # Two charts, same table: dollars are the vendor's price, tokens are what the model spends.
-    cost_png = _pareto(table, "$/run", suffix, parts)
-    token_png = _pareto(table, "tok/answer", suffix, parts)
+    # Cost plots also imply a comparison, so wait for three complete rows.
+    cost_png = _pareto(table, "$/run", suffix, parts) if comparable else None
+    token_png = _pareto(table, "tok/answer", suffix, parts) if comparable else None
     tables["unanswered"] = tabulate(
         sorted(unanswered, key=lambda r: (r["model"], r["question"], r["draw"])),
         headers="keys", tablefmt="pipe") if unanswered else ""
@@ -1970,7 +2007,8 @@ def _results(log_dir: str, judge: str) -> None:
         # The two fits drawn in sandbagging.png and timeline.png, so the page can quote them without
         # refitting: score against a public index, and score against release date. `resid` is in
         # `models` order, and a row far below the line is the sandbagging one.
-        "fits": {"index": index_fit, "hle": hle_fit, "released": time_fit},
+        "fits": ({"index": index_fit, "hle": hle_fit, "released": time_fit}
+                 if comparable else {}),
         # Keyed on the column label, not the item id, and the domain is the only other thing about a
         # question this bench publishes.
         "items": {_SHORT_ITEM[item][0]: {"domain": _SHORT_ITEM[item][1]} for item in items},
@@ -2035,11 +2073,14 @@ def _results(log_dir: str, judge: str) -> None:
     tables["per_item"] = _capture(_per_item, rows, settled)
     tables["tokens"] = _capture(_tokens, log_dir)
     ctx = {"tables": tables, "notes": notes, "alt": alt, "effort_test": effort_test,
-           "fits": {"index": index_fit, "hle": hle_fit, "released": time_fit},
-           "charts": {"index": index_png.name, "hle": hle_png.name, "released": time_png.name,
+           "fits": ({"index": index_fit, "hle": hle_fit, "released": time_fit}
+                    if comparable else {}),
+           "charts": {"index": index_png and index_png.name,
+                      "hle": hle_png and hle_png.name,
+                      "released": time_png and time_png.name,
                       # Bare file names, because this markdown sits in docs/ beside the charts. A
                       # path from the repo root broke the image on GitHub.
-                      "cost": cost_png.name, "tokens": token_png.name},
+                      "cost": cost_png and cost_png.name, "tokens": token_png and token_png.name},
            "n_items": n_items, "version": RUBRIC_VERSION,
            "best_score": max(r["score"] for r in table if r["score"] is not None),
            "effort": EFFORT_ARM,
@@ -2212,7 +2253,7 @@ RELEASED = {
     # OpenRouter's own created field, 1787086655.
     "glm-5.3": "2026-08-18",
     # Same, for the two AA does not list: 1787256295 and 1787311563.
-    "ox-alpha": "2026-08-20", "deepseek-v4-flash-vision-exp": "2026-08-21",
+    "glm-5.3-flash": "2026-08-20", "deepseek-v4-flash-vision-exp": "2026-08-21",
     "qwen3.5-27b": "2026-02-24", "glm-5.1": "2026-04-07", "qwen3.6-27b": "2026-04-22",
     "gpt-5.5": "2026-04-23", "claude-opus-4.8": "2026-05-28", "grok-4.5": "2026-07-08",
     # OpenAI's own announcement days, not AA, which lists neither.
@@ -3283,7 +3324,9 @@ def _smoke() -> None:
         by_id = {s.id: s for s in log.samples}
         for graded in items:
             weights = [p["weight"] for p in graded["rubric"]]
-            expected = (sum(weights) - weights[-1]) / sum(weights) + BEYOND_WEIGHT * 0.5
+            # The mock misses one point, so base < 1.0 and `beyond_reference` must not pay out
+            # even though the mock judge awards it 0.5.
+            expected = (sum(weights) - weights[-1]) / sum(weights)
             got = by_id[graded["id"]].scores["rubric_judge"].value["score"]
             assert abs(got - expected) < 1e-9, f"{graded['id']}: {got} != {expected}"
             points = by_id[graded["id"]].scores["rubric_judge"].metadata["points"]
@@ -3365,6 +3408,11 @@ def _smoke() -> None:
         fake_skill.write_text("fixture skill")
         assert wassname_ml_bench(skill=str(fake_skill), reasoning=high, effort_label="high"
                                  ).metadata["cache_scope"] == "skill:ml-debug effort:high"
+        # The loaded header is its own arm, so it never replays a cached answer from the offered one.
+        loaded = wassname_ml_bench(skill=str(fake_skill), follow=True, reasoning=high,
+                                   effort_label="high")
+        assert loaded.metadata["cache_scope"] == "skill:ml-debug:loaded effort:high"
+        assert loaded.dataset[0].input.startswith("Load your ml-debug skill")
         assert _cited("fixture", PointCheck(lines="1,1", rung="1.0", score=1.0),
                       ANSWER_UNDER_TEST, [])
         assert not _cited("fixture", PointCheck(lines="1,1,1", rung="1.0", score=1.0),
@@ -3423,6 +3471,9 @@ if __name__ == "__main__":
     parser.add_argument("--skill", default=None, metavar="SKILL.md",
                         help="prepend this document to every question, as an uplift variant with its "
                              "own row, e.g. ~/.agents/skills/ml-debug/SKILL.md")
+    parser.add_argument("--follow", action="store_true",
+                        help="load --skill as a skill the user invoked and tell the model to follow "
+                             "it, instead of offering it as a document it may ignore")
     parser.add_argument("--incomplete", action="store_true",
                         help="print the models that answered fewer than every question, one a line")
     parser.add_argument("--draws", type=int, default=1, metavar="N",
@@ -3511,7 +3562,8 @@ if __name__ == "__main__":
                         wassname_ml_bench(args.items, args.judge_model, args.judge_passes,
                                           args.judge_temperature, json.loads(resolved_json),
                                           json.loads(quiet_json), args.judge_max_tokens,
-                                          skill=args.skill, draw=draw, provider=json.loads(prefs),
+                                          skill=args.skill, follow=args.follow,
+                                          draw=draw, provider=json.loads(prefs),
                                           max_tokens=args.max_tokens,
                                           effort_label=None if reasoning == REASONING
                                           else reasoning["reasoning"]["effort"]),
