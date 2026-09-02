@@ -1,11 +1,12 @@
 # wassname-ml-bench
 
-A small private benchmark of fifteen machine learning research questions from
+A small private benchmark of twelve machine learning research questions from
 [wassname](https://wassname.org)'s own work, scored against the answer he reached at the time, so
 1.00 is his answer. The work is obscure and some of it is newer than the models, so a model has to
 derive the answer rather than recall it.
 
 - Results and charts: [results.md](results.md), or the page at https://wassname.github.io/ml-bench/
+- Latest separate 15-question result: [Claude Fable 5, 2026-09-02](history/2026-09-02_fable-v102.md)
 - Harness: [bench.py](bench.py), the same file that runs the scored runs
 - Code: https://github.com/wassname/ml-bench
 

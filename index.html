@@ -271,9 +271,9 @@ function draw(data, x, labs, svg) {
   // The stored fit covers every model. The reader can switch labs off, so the line is re-fitted
   // over what is on the chart, and falls back to the stored one when too few points are left for
   // the band to mean anything.
-  const storedFit = ax.fit && data.fits[ax.fit];
-  const shownFit = storedFit && refit(rows.filter(r => labs.has(r.company)), ax, storedFit.models);
-  const fit = shownFit || storedFit;
+  const shownFit = ax.fit && refit(rows.filter(r => labs.has(r.company)), ax,
+                                   data.fits[ax.fit].models);
+  const fit = shownFit || (ax.fit && data.fits[ax.fit]);
   const shown = rows.filter(r => labs.has(r.company));
   // Bounds come from every point, so filtering a lab moves nothing under it.
   const xs = rows.map(r => at(ax.x(r)));
@@ -285,8 +285,7 @@ function draw(data, x, labs, svg) {
   const last = Math.max(...rows.map(r => ax.x(r)));
   const far = reach && reach - last < 5 * 365 ? at(reach) : -Infinity;
   const lo = Math.min(...xs), hi = Math.max(Math.max(...xs), far);
-  const pad = hi === lo ? (ax.scale === "log" ? 0.25 : ax.scale === "date" ? 30 : 1)
-                        : ax.scale === "log" ? 0.25 : (hi - lo) * 0.06;
+  const pad = ax.scale === "log" ? 0.25 : (hi - lo) * 0.06;
   const x0 = lo - pad, x1 = hi + pad;
   // The floor follows the data. Pinned at 0 it spent half the chart on empty space when the
   // weakest model scored 0.38, and 0 keeps its meaning in the caption rather than on the axis. The
@@ -396,7 +395,7 @@ function draw(data, x, labs, svg) {
 
   // What this is and where it came from, inside the axes so a cropped screenshot keeps it.
   Object.assign(el("text", { class: "err-text", x: PAD.l + 4, y: H - PAD.b - 10 }, svg),
-                { textContent: `wassname's ML bench: ${nItems} hard ML problems, ` +
+                { textContent: "wassname's ML bench: 12 hard ML problems, " +
                                "https://wassname.github.io/ml-bench/" });
 
   // A cost axis gets the Pareto step. A public-number axis gets the least-squares line and the
