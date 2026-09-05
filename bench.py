@@ -193,6 +193,7 @@ MODELS = {
         "openrouter/google/gemma-3-4b-it",
         "openrouter/google/gemma-4-31b-it",
         "openrouter/openai/gpt-5.6-luna",
+        "openrouter/openai/gpt-6-astra",
         "openrouter/deepseek/deepseek-v4-flash-0731",
     ],
     # One family at five sizes, so the chart has a cheap left anchor and a scaling curve inside a

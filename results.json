@@ -60,6 +60,35 @@
    "VJ#12": 1.056763563458158
   },
   {
+   "model": "gpt-6-astra",
+   "company": "OpenAI",
+   "fallback": null,
+   "score": 0.8174392825679098,
+   "+-": 0.054,
+   "answered": "12/12",
+   "answers/q": 1,
+   "$/run": 0.8735900000000001,
+   "tok/answer": 1353.5833333333333,
+   "pts/Mtok": 50.325634585231164,
+   "reasoning share": 0.17102751954688172,
+   "full": "openai/gpt-6-astra",
+   "index": null,
+   "hle": null,
+   "released": null,
+   "AP#1": 0.7346832520010602,
+   "CW#2": 0.8251586153071943,
+   "KL#3": 0.6612891775364829,
+   "MC#4": 0.6149154483111043,
+   "NP#5": 1.0704706423085555,
+   "OL#6": 1.070279253173915,
+   "PC#7": 0.7391684677037773,
+   "SV#8": 0.8678048562565055,
+   "TR#9": 0.5067052737817774,
+   "TS#10": 0.8905156710839908,
+   "VG#11": 0.7578100910419984,
+   "VJ#12": 1.0704706423085555
+  },
+  {
    "model": "gpt-5.6-terra",
    "company": "OpenAI",
    "fallback": null,
@@ -618,7 +647,7 @@
    "+-": 0.067,
    "answered": "12/12",
    "answers/q": 1,
-   "$/run": 0.12893034,
+   "$/run": 0.21892371732,
    "tok/answer": 5026.5,
    "pts/Mtok": 8.62563688691281,
    "reasoning share": 0.7789714513080672,
@@ -705,7 +734,7 @@
    "+-": 0.08,
    "answered": "12/12",
    "answers/q": 1,
-   "$/run": 0.2697576,
+   "$/run": 0.1493692,
    "tok/answer": 6037.666666666667,
    "pts/Mtok": 6.392531961252138,
    "reasoning share": 0.5986032131618175,
@@ -1274,21 +1303,21 @@
     "off_topic": -0.0076,
     "gold": 0.997,
     "gap": 1.005,
-    "leniency": -0.045,
-    "judgments": 727
+    "leniency": -0.044,
+    "judgments": 739
    },
    "google/gemma-4-31b-it": {
     "off_topic": 0.0103,
     "gold": 0.9901,
     "gap": 0.98,
     "leniency": -0.001,
-    "judgments": 1658
+    "judgments": 1670
    },
    "openai/gpt-oss-120b": {
     "off_topic": -0.0158,
     "gold": 0.9962,
     "gap": 1.012,
-    "leniency": 0.065,
+    "leniency": 0.064,
     "judgments": 1584
    },
    "qwen/qwen3.7-flash": {
@@ -1296,19 +1325,19 @@
     "gold": 0.9923,
     "gap": 0.996,
     "leniency": -0.019,
-    "judgments": 1573
+    "judgments": 1585
    },
    "thinkingmachines/inkling-small": {
     "off_topic": -0.02,
     "gold": 0.9877,
     "gap": 1.008,
-    "leniency": -0.0,
-    "judgments": 1680
+    "leniency": -0.001,
+    "judgments": 1692
    }
   },
   "disagreement": {
    "sd": 0.163,
-   "judgments_per_row": 111,
+   "judgments_per_row": 110,
    "se": 0.016
   },
   "dropout": {
@@ -1342,6 +1371,7 @@
    "gpt-5.6-terra": -0.016,
    "gpt-5.6-terra (effort:high budget:64000)": -0.016,
    "gpt-5.6-terra (skill:ml-debug-v5:loaded effort:high budget:64000)": -0.016,
+   "gpt-6-astra": -0.016,
    "gpt-oss-120b": -0.016,
    "o1": -0.016,
    "qwen3.5-27b": 0.005,
@@ -1359,7 +1389,7 @@
   "parts": {
    "between questions": 0.066,
    "between answers": 0.021,
-   "between judges": 0.015
+   "between judges": 0.016
   }
  },
  "unanswered": [
@@ -1467,13 +1497,6 @@
   }
  ],
  "borrowed": {
-  "claude-fable-5.1": {
-   "from": "claude-opus-5",
-   "items": [
-    "VG#11"
-   ],
-   "refused": 1
-  },
   "claude-fable-5": {
    "from": "claude-opus-5",
    "items": [
@@ -1482,6 +1505,13 @@
     "SV#8"
    ],
    "refused": 3
+  },
+  "claude-fable-5.1": {
+   "from": "claude-opus-5",
+   "items": [
+    "VG#11"
+   ],
+   "refused": 1
   }
  }
 }
