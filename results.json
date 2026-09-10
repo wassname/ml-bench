@@ -560,7 +560,7 @@
    "+-": 0.079,
    "answered": "12/12",
    "answers/q": 1,
-   "$/run": 0.367182,
+   "$/run": null,
    "tok/answer": 4122.583333333333,
    "pts/Mtok": 11.895511721607145,
    "reasoning share": 0.6641062440621779,
@@ -647,7 +647,7 @@
    "+-": 0.067,
    "answered": "12/12",
    "answers/q": 1,
-   "$/run": 0.21892371732,
+   "$/run": 0.20499924060000002,
    "tok/answer": 5026.5,
    "pts/Mtok": 8.62563688691281,
    "reasoning share": 0.7789714513080672,
@@ -1497,6 +1497,13 @@
   }
  ],
  "borrowed": {
+  "claude-fable-5.1": {
+   "from": "claude-opus-5",
+   "items": [
+    "VG#11"
+   ],
+   "refused": 1
+  },
   "claude-fable-5": {
    "from": "claude-opus-5",
    "items": [
@@ -1505,13 +1512,6 @@
     "SV#8"
    ],
    "refused": 3
-  },
-  "claude-fable-5.1": {
-   "from": "claude-opus-5",
-   "items": [
-    "VG#11"
-   ],
-   "refused": 1
   }
  }
 }

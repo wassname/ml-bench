@@ -79,6 +79,38 @@ When will a model be as good as me (wassname)? <!-- -- wassname -->
 
 ![score against release date](timeline.png)
 
+## Which public benchmark predicts this one?
+
+This check compares our score with [Artificial Analysis](https://artificialanalysis.ai/leaderboards/models)
+metrics for 25 matched models. It uses AA rows marked `max`, plus rows AA gives no effort label, and
+excludes provider fallback rows. `LOO R²` asks how well a linear fit predicts one held-out model,
+compared with predicting the mean. The table is a 2026-09-10 snapshot. <!-- -- PI[k3] -->
+
+| AA metric | n | LOO R² ↑ | Pearson r | Spearman ρ |
+|:--|--:|--:|--:|--:|
+| Intelligence Index | 25 | +0.79 | +0.90 | +0.87 |
+| Analyst Agent | 9 | +0.76 | +0.90 | +0.93 |
+| HLE | 24 | +0.68 | +0.85 | +0.88 |
+| Terminal-Bench v2.1 | 22 | +0.67 | +0.83 | +0.90 |
+| GDPval | 23 | +0.67 | +0.83 | +0.75 |
+| Terminal-Bench v4.0 | 20 | +0.67 | +0.83 | +0.82 |
+| Critical Point | 24 | +0.66 | +0.83 | +0.82 |
+| Omniscience score | 25 | +0.65 | +0.83 | +0.78 |
+| Terminal-Bench hard | 11 | +0.65 | +0.85 | +0.80 |
+| Omniscience accuracy | 25 | +0.60 | +0.79 | +0.80 |
+| SciCode | 21 | +0.59 | +0.79 | +0.85 |
+| IT-Bench SRE | 9 | +0.56 | +0.79 | +0.70 |
+| long-context reasoning | 24 | +0.42 | +0.69 | +0.68 |
+| GPQA | 25 | +0.33 | +0.74 | +0.87 |
+| τ²-Bench banking | 22 | +0.32 | +0.62 | +0.63 |
+| MMMU-Pro | 15 | +0.21 | +0.79 | +0.89 |
+| IFBench | 12 | +0.04 | +0.48 | +0.31 |
+| τ²-Bench | 11 | -0.02 | +0.21 | +0.02 |
+| Omniscience non-hallucination | 25 | -0.05 | +0.10 | +0.01 |
+
+The strongest broad predictor in this snapshot is AA's Intelligence Index. `n` varies because AA
+does not report every metric for every model. <!-- -- PI[k3] -->
+
 ## Notes on the main table
 
 claude-fable-5 refuses questions its provider blocks, 3 of 12 in at least one draw. The 3 it never answered (AP#1, OL#6, SV#8). Those cells take claude-opus-5's score, shown in italic. The row then measures a pair of models, and $/run counts only its own tokens.
