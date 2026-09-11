@@ -1430,7 +1430,7 @@ def _ktok_text(row: dict) -> str:
     share = row.get("reasoning share")
     return (f"{row['tok/answer']:,.0f} tokens per answer, reasoning included, against a requested "
             f"{ANSWER_MAX_TOKENS:,}-token thinking budget"
-            + (f"<br>reasoning effort '{EFFORT_ARM}', and "
+            + (f"<br>reasoning effort '{EFFORT_ARM}' (this model's lowest listed thinking rung), "
                f"{share:.0%} of the output was reasoning" if share is not None else ""))
 
 
