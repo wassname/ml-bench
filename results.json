@@ -241,7 +241,7 @@
    "+-": 0.067,
    "answered": "12/12",
    "answers/q": 1,
-   "$/run": 0.383265,
+   "$/run": 0.2989467,
    "tok/answer": 1992.0833333333333,
    "pts/Mtok": 28.645357236581038,
    "reasoning share": 0.44120476887680404,
@@ -435,6 +435,35 @@
    "TS#10": 0.7901003264125355,
    "VG#11": 0.3665137977152885,
    "VJ#12": 0.8672252150314453
+  },
+  {
+   "model": "deepseek-v4.1-flash",
+   "company": "DeepSeek",
+   "fallback": null,
+   "score": 0.6413727632523692,
+   "+-": 0.095,
+   "answered": "12/12",
+   "answers/q": 1,
+   "$/run": 0.0824673,
+   "tok/answer": 5420.5,
+   "pts/Mtok": 9.86029522572286,
+   "reasoning share": 0.7265627402146173,
+   "full": "deepseek/deepseek-v4.1-flash",
+   "index": null,
+   "hle": null,
+   "released": null,
+   "AP#1": 0.7128180912657592,
+   "CW#2": -0.06046271830053619,
+   "KL#3": 0.7780700983235527,
+   "MC#4": 0.18478410220579128,
+   "NP#5": 0.9877748528081612,
+   "OL#6": 1.1329588925414296,
+   "PC#7": 0.614308918536661,
+   "SV#8": 0.43776659567405973,
+   "TR#9": 0.733349741927371,
+   "TS#10": 0.6041582381808577,
+   "VG#11": 0.8296483860465276,
+   "VJ#12": 0.7412979598187962
   },
   {
    "model": "gpt-5.6-luna",
@@ -647,7 +676,7 @@
    "+-": 0.067,
    "answered": "12/12",
    "answers/q": 1,
-   "$/run": 0.20499924060000002,
+   "$/run": 0.12893034,
    "tok/answer": 5026.5,
    "pts/Mtok": 8.62563688691281,
    "reasoning share": 0.7789714513080672,
@@ -1311,33 +1340,33 @@
     "gold": 0.9901,
     "gap": 0.98,
     "leniency": -0.001,
-    "judgments": 1670
+    "judgments": 1682
    },
    "openai/gpt-oss-120b": {
     "off_topic": -0.0158,
     "gold": 0.9962,
     "gap": 1.012,
     "leniency": 0.064,
-    "judgments": 1584
+    "judgments": 1596
    },
    "qwen/qwen3.7-flash": {
     "off_topic": -0.0037,
     "gold": 0.9923,
     "gap": 0.996,
     "leniency": -0.019,
-    "judgments": 1585
+    "judgments": 1597
    },
    "thinkingmachines/inkling-small": {
     "off_topic": -0.02,
     "gold": 0.9877,
     "gap": 1.008,
     "leniency": -0.001,
-    "judgments": 1692
+    "judgments": 1704
    }
   },
   "disagreement": {
    "sd": 0.163,
-   "judgments_per_row": 110,
+   "judgments_per_row": 109,
    "se": 0.016
   },
   "dropout": {
@@ -1364,6 +1393,7 @@
    "deepseek-v4-flash-0731 (skill:ml-debug-v7:loaded effort:high budget:64000)": 0.011,
    "deepseek-v4-flash-vision-exp": 0.011,
    "deepseek-v4-pro-0813": 0.011,
+   "deepseek-v4.1-flash": 0.011,
    "gpt-4": -0.016,
    "gpt-5.5": -0.016,
    "gpt-5.6-luna": -0.016,
